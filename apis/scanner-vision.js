@@ -52,7 +52,7 @@ Responde SOLO en formato JSON así:
 }`;
 
       // Llamada directa a Azure OpenAI REST API
-      Console.log('Azure URL:', url);
+      console.log('Azure URL:', url);
       console.log('API Key exists:', !!this.apiKey, 'length:', this.apiKey ? this.apiKey.length : 0);
       const url = `${this.endpoint}openai/deployments/${this.deployment}/chat/completions?api-version=${this.apiVersion}`;
 
