@@ -77,16 +77,17 @@ Responde SOLO en formato JSON así:
           ],
           max_tokens: 800,
           temperature: 0.3
-        })
+     })
       });
 
-      const response = await apiResponse.json();
+    const response = await apiResponse.json();
+    console.log('Azure response:', JSON.stringify(response));
 
-      if (!response.choices || !response.choices[0]) {
-        throw new Error('No se recibio respuesta de Azure OpenAI');
-      }
+    if (!response.choices || !response.choices[0]) {
+    throw new Error('No se recibio respuesta de Azure OpenAI');
+    }
 
-      const resultado = response.choices[0].message.content;
+     const resultado = response.choices[0].message.content;
 
       // Parsear JSON de la respuesta
       let datosVino;
