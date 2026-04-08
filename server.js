@@ -41,7 +41,10 @@ app.get('/api/health', (req, res) => {
 app.get('/api/vinos/tipo/:tipo', async (req, res) => {
   try {
     const { tipo } = req.params;
-    const vinos = await vinosAPI.obtenerVinosPorTipo(tipo);
+    const tipoMap = { 'tintos': 'reds', 'blancos': 'whites', 'rosados': 'rose', 'espumoso': 'sparkling', 'postre': 'dessert', 'oporto': 'port' };
+    const tipoAPI = tipoMap[tipo] || tipo;
+    const vinos = await vinosAPI.obtenerVinosPorTipo(tipoAPI);
+ 
     res.json({
       success: true,
       tipo,
