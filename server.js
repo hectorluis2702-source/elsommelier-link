@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3000;
 
 // Middlewares
 app.use(cors());
-app.use(express.json({limit:´10mb´}));
+app.use(express.json({limit:′1Omb‵}));
 
 // ======================
 // HEALTH CHECK
