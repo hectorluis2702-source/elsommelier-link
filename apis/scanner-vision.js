@@ -1,14 +1,13 @@
-const { OpenAIClient, AzureKeyCredential } = require('@azure/openai');
+const fetch = require('node-fetch');
 const { createClient } = require('@supabase/supabase-js');
 
 class ScannerVision {
   constructor() {
-    // Azure OpenAI Client (GPT-4o con Vision)
-    this.openaiClient = new OpenAIClient(
-      process.env.AZURE_OPENAI_ENDPOINT,
-      new AzureKeyCredential(process.env.AZURE_OPENAI_KEY)
-    );
+    // Azure OpenAI config (REST API directo)
+    this.endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+    this.apiKey = process.env.AZURE_OPENAI_KEY;
     this.deployment = process.env.AZURE_OPENAI_DEPLOYMENT || 'Cerebro-Elsommelier-RD';
+    this.apiVersion = process.env.AZURE_OPENAI_API_VERSION || '2024-02-01';
 
     // Supabase Client
     this.supabase = createClient(
@@ -52,30 +51,40 @@ Responde SOLO en formato JSON así:
   "notas": "observaciones adicionales"
 }`;
 
-      // Llamada a GPT-4o Vision
-      const messages = [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: prompt },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:image/jpeg;base64,${imagenBase64}`
-              }
-            }
-          ]
-        }
-      ];
+      // Llamada directa a Azure OpenAI REST API
+      const url = `${this.endpoint}openai/deployments/${this.deployment}/chat/completions?api-version=${this.apiVersion}`;
 
-      const response = await this.openaiClient.getChatCompletions(
-        this.deployment,
-        messages,
-        {
-          maxTokens: 800,
-          temperature: 0.3 // Baja temperatura para respuestas precisas
-        }
-      );
+      const apiResponse = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': this.apiKey
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: prompt },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:image/jpeg;base64,${imagenBase64}`
+                  }
+                }
+              ]
+            }
+          ],
+          max_tokens: 800,
+          temperature: 0.3
+        })
+      });
+
+      const response = await apiResponse.json();
+
+      if (!response.choices || !response.choices[0]) {
+        throw new Error('No se recibio respuesta de Azure OpenAI');
+      }
 
       const resultado = response.choices[0].message.content;
 
