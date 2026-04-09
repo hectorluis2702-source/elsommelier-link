@@ -72,52 +72,55 @@ Responde SOLO en formato JSON así:
               content: [
                 { type: 'text', text: prompt },
                 {
-                  type: 'image_url',
-                  image_url: {
-                    url: `data:image/jpeg;base64,${imagenBase64}`
-                  }
-                }
-              ]
-            }
-          ],
-          max_tokens: 800,
-          temperature: 0.3
-        })
-      });
-                  
-      if (error) {
-        console.error('Error guardando en Supabase:', error);
-        return {
-          success: false,
-          error: 'Error guardando vino en base de datos',
-          detalles: error.message
-        };
-      }
+// 1. Construcción de la URL (Corregido this.deployment)
+    const url = `${this.endpoint}openai/deployments/${this.deployment}/chat/completions?api-version=${this.apiVersion}`;
+    
+    console.log('Azure URL:', url);
+    console.log('API Key exists:', !!this.apiKey);
 
-      return {
-        success: true,
-        vino: data[0],
-        mensaje: 'Vino guardado exitosamente en tu bodega'
-      };
+    const apiResponse = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': this.apiKey
+      },
+      body: JSON.stringify({
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt },
+              {
+                type: 'image_url',
+                image_url: { url: `data:image/jpeg;base64,${imagenBase64}` }
+              }
+            ]
+          }
+        ],
+        max_tokens: 800,
+        temperature: 0.3
+      })
+    });
 
-    } catch (error) {
-      console.error('Error en guardarVinoEscaneado:', error);
-      return {
-        success: false,
-        error: 'Error procesando guardado',
-        detalles: error.message
-      };
+    const result = await apiResponse.json();
+
+    // 2. Manejo de errores de Azure
+    if (result.error) {
+       throw new Error(result.error.message);
     }
-  }
 
-  // Buscar vino en base de datos por características
-  async buscarVinoSimilar(datosVino) {
-    try {
-      const { data, error } = await this.supabase
-        .from('vinos_escaneados')
-        .select('*')
-        .or(`nombre.ilike.%${datosVino.nombre}%,bodega.ilike.%${datosVino.bodega}%`)
-        .limit(5);
+    // 3. Extraer el JSON que envió la IA
+    const datosVino = JSON.parse(result.choices[0].message.content);
+
+    // 4. Guardar en Supabase (Aquí definimos data y error)
+    const { data, error } = await this.supabase
+      .from('vinos_escaneados')
+      .insert([{
+        ...datosVino,
+        user_id: userId,
+        fecha_escaneo: new Date().toISOString()
+      }])
+      .select();
 
       if (error) {
         console.error('Error buscando vinos similares:', error);
