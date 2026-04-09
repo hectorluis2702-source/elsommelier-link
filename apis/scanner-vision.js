@@ -3,62 +3,25 @@ const { createClient } = require('@supabase/supabase-js');
 
 class ScannerVision {
   constructor() {
-    // Azure OpenAI config (REST API directo)
     this.endpoint = process.env.AZURE_OPENAI_ENDPOINT;
     this.apiKey = process.env.AZURE_OPENAI_KEY;
     this.deployment = process.env.AZURE_OPENAI_DEPLOYMENT || 'Cerebro-Elsommelier-RD';
     this.apiVersion = process.env.AZURE_OPENAI_API_VERSION || '2024-02-01';
 
-    // Supabase Client
     this.supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_KEY
     );
   }
 
-  // Analizar imagen de etiqueta de vino con GPT-4o Vision
   async analizarEtiquetaVino(imagenBase64, userId = null) {
     try {
-      const prompt = `Eres un experto sommelier analizando una etiqueta de vino.
+      const prompt = `Eres un experto sommelier. Analiza la imagen y responde SOLO en JSON con: nombre, bodega, variedad, año, region, denominacion, alcohol, tipo, confianza, notas.`;
 
-ANALIZA esta imagen y extrae la siguiente información:
+      const url = `${this.endpoint}openai/deployments/${this.deployment}/chat/completions?api-version=${this.apiVersion}`;
+      
+      console.log('Azure URL:', url);
 
-1. Nombre del vino
-2. Bodega/Productor
-3. Variedad/Tipo de uva (Cabernet, Merlot, Chardonnay, etc.)
-4. Año de cosecha (vintage)
-5. Región/País de origen
-6. Denominación de origen (si está visible)
-7. Grado alcohólico (%)
-8. Tipo de vino (tinto, blanco, rosado, espumoso)
-
-IMPORTANTE:
-- Si algún dato NO es visible, responde "No visible"
-- Sé preciso con los nombres
-- Identifica correctamente la variedad de uva
-
-Responde SOLO en formato JSON así:
-{
-  "nombre": "nombre del vino",
-  "bodega": "nombre de la bodega",
-  "variedad": "tipo de uva",
-  "año": "año o No visible",
-  "region": "región y país",
-  "denominacion": "DO o No visible",
-  "alcohol": "% o No visible",
-  "tipo": "tinto/blanco/rosado/espumoso",
-  "confianza": "alta/media/baja",
-  "notas": "observaciones adicionales"
-}`;
-
-     // Llamada directa a Azure OpenAI REST API
-    const url = `${this.endpoint}openai/deployments/${this.deploymentName}/chat/completions?api-version=${this.apiVersion}`;
-    
-    console.log('Azure URL:', url);
-    console.log('API Key exists:', !!this.apiKey, 'length:', this.apiKey ? this.apiKey.length : 0);
-
-    
-         
       const apiResponse = await fetch(url, {
         method: 'POST',
         headers: {
@@ -72,201 +35,40 @@ Responde SOLO en formato JSON así:
               content: [
                 { type: 'text', text: prompt },
                 {
-// 1. Construcción de la URL (Corregido this.deployment)
-    const url = `${this.endpoint}openai/deployments/${this.deployment}/chat/completions?api-version=${this.apiVersion}`;
-    
-    console.log('Azure URL:', url);
-    console.log('API Key exists:', !!this.apiKey);
+                  type: 'image_url',
+                  image_url: { url: `data:image/jpeg;base64,${imagenBase64}` }
+                }
+              ]
+            }
+          ],
+          max_tokens: 800,
+          temperature: 0.3
+        })
+      });
 
-    const apiResponse = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': this.apiKey
-      },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: prompt },
-              {
-                type: 'image_url',
-                image_url: { url: `data:image/jpeg;base64,${imagenBase64}` }
-              }
-            ]
-          }
-        ],
-        max_tokens: 800,
-        temperature: 0.3
-      })
-    });
+      const result = await apiResponse.json();
+      if (result.error) throw new Error(result.error.message);
 
-    const result = await apiResponse.json();
-
-    // 2. Manejo de errores de Azure
-    if (result.error) {
-       throw new Error(result.error.message);
-    }
-
-    // 3. Extraer el JSON que envió la IA
-    const datosVino = JSON.parse(result.choices[0].message.content);
-
-    // 4. Guardar en Supabase (Aquí definimos data y error)
-    const { data, error } = await this.supabase
-      .from('vinos_escaneados')
-      .insert([{
-        ...datosVino,
-        user_id: userId,
-        fecha_escaneo: new Date().toISOString()
-      }])
-      .select();
-
-      if (error) {
-        console.error('Error buscando vinos similares:', error);
-        return { success: false, vinos: [] };
-      }
-
-      return {
-        success: true,
-        vinos: data || [],
-        cantidad: data ? data.length : 0
-      };
-
-    } catch (error) {
-      console.error('Error en buscarVinoSimilar:', error);
-      return { success: false, vinos: [] };
-    }
-  }
-
-  // Obtener historial de escaneos de un usuario
-  async obtenerHistorialEscaneos(userId, limite = 20) {
-    try {
-      const { data, error } = await this.supabase
-        .from('vinos_escaneados')
-        .select('*')
-        .eq('user_id', userId)
-        .order('fecha_escaneo', { ascending: false })
-        .limit(limite);
-
-      if (error) {
-        console.error('Error obteniendo historial:', error);
-        return {
-          success: false,
-          error: 'Error obteniendo historial',
-          vinos: []
-        };
-      }
-
-      return {
-        success: true,
-        cantidad: data.length,
-        vinos: data
-      };
-
-    } catch (error) {
-      console.error('Error en obtenerHistorialEscaneos:', error);
-      return {
-        success: false,
-        error: 'Error procesando historial',
-        vinos: []
-      };
-    }
-  }
-
-  // Actualizar notas de cata de un vino escaneado
-  async actualizarNotasCata(vinoId, notas, calificacion = null) {
-    try {
-      const actualizacion = {
-        notas_cata: notas,
-        updated_at: new Date().toISOString()
-      };
-
-      if (calificacion !== null) {
-        actualizacion.calificacion_usuario = calificacion;
-      }
+      const content = result.choices[0].message.content.replace(/```json|```/g, '').trim();
+      const datosVino = JSON.parse(content);
 
       const { data, error } = await this.supabase
         .from('vinos_escaneados')
-        .update(actualizacion)
-        .eq('id', vinoId)
+        .insert([{
+          ...datosVino,
+          user_id: userId,
+          fecha_escaneo: new Date().toISOString()
+        }])
         .select();
 
-      if (error) {
-        console.error('Error actualizando notas:', error);
-        return {
-          success: false,
-          error: 'Error actualizando notas de cata'
-        };
-      }
+      if (error) throw error;
 
-      return {
-        success: true,
-        vino: data[0],
-        mensaje: 'Notas de cata actualizadas'
-      };
+      return { success: true, vino: data[0] };
 
     } catch (error) {
-      console.error('Error en actualizarNotasCata:', error);
-      return {
-        success: false,
-        error: 'Error procesando actualización'
-      };
+      console.error('Error:', error.message);
+      return { success: false, error: error.message };
     }
-  }
-
-  // Eliminar vino escaneado
-  async eliminarVinoEscaneado(vinoId, userId) {
-    try {
-      const { data, error } = await this.supabase
-        .from('vinos_escaneados')
-        .delete()
-        .eq('id', vinoId)
-        .eq('user_id', userId);
-
-      if (error) {
-        console.error('Error eliminando vino:', error);
-        return {
-          success: false,
-          error: 'Error eliminando vino'
-        };
-      }
-
-      return {
-        success: true,
-        mensaje: 'Vino eliminado de tu bodega'
-      };
-
-    } catch (error) {
-      console.error('Error en eliminarVinoEscaneado:', error);
-      return {
-        success: false,
-        error: 'Error procesando eliminación'
-      };
-    }
-  }
-
-  // Validar formato de imagen base64
-  validarImagenBase64(imagenBase64) {
-    if (!imagenBase64 || typeof imagenBase64 !== 'string') {
-      return { valido: false, error: 'Imagen no proporcionada' };
-    }
-
-    // Verificar que sea base64 válido
-    const base64Regex = /^[A-Za-z0-9+/=]+$/;
-    const imagenLimpia = imagenBase64.replace(/^data:image\/\w+;base64,/, '');
-
-    if (!base64Regex.test(imagenLimpia)) {
-      return { valido: false, error: 'Formato de imagen inválido' };
-    }
-
-    // Verificar tamaño (max 10MB en base64)
-    const tamaño = (imagenLimpia.length * 3) / 4 / 1024 / 1024; // MB
-    if (tamaño > 10) {
-      return { valido: false, error: 'Imagen demasiado grande (máx 10MB)' };
-    }
-
-    return { valido: true, imagenLimpia };
   }
 }
 
