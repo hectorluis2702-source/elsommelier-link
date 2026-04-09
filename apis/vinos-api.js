@@ -1,90 +1,138 @@
 const fetch = require('node-fetch');
 
-// API gratuita de vinos: Sampleapis.com Wine API
-const WINE_API_BASE = 'https://api.sampleapis.com/wines';
-
+// Catalogo propio en Supabase — datos ricos, controlados, dominicanos
 class VinosAPI {
-  // Obtener vinos por tipo (reds, whites, sparkling, rose, dessert, port)
-  async obtenerVinosPorTipo(tipo = 'reds') {
+  constructor() {
+    this.supabaseUrl = process.env.SUPABASE_URL;
+    this.supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+  }
+
+  get headers() {
+    return {
+      'apikey': this.supabaseKey,
+      'Authorization': `Bearer ${this.supabaseKey}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  // Mapea cualquier variante de tipo al valor en la tabla
+  normalizarTipo(tipo) {
+    const mapa = {
+      'tintos': 'tinto', 'tinto': 'tinto', 'reds': 'tinto',
+      'blancos': 'blanco', 'blanco': 'blanco', 'whites': 'blanco',
+      'rosados': 'rosado', 'rosado': 'rosado', 'rose': 'rosado',
+      'espumoso': 'espumoso', 'espumosos': 'espumoso', 'sparkling': 'espumoso', 'champagne': 'espumoso',
+      'fortificado': 'fortificado', 'oporto': 'fortificado', 'port': 'fortificado',
+      'dulce': 'dulce', 'dessert': 'dulce', 'postre': 'dulce',
+      'naranja': 'naranja'
+    };
+    return mapa[tipo?.toLowerCase()] || tipo;
+  }
+
+  // Formato estandar de vino para la API
+  formatearVino(v) {
+    return {
+      id: v.id,
+      nombre: v.nombre,
+      bodega: v.bodega,
+      tipo: v.tipo,
+      pais: v.pais,
+      region: v.region || null,
+      denominacion_origen: v.denominacion_origen || null,
+      uvas: v.uvas || [],
+      varietal: v.uvas ? v.uvas.join(', ') : null,
+      descripcion: v.descripcion || null,
+      notas_cata: v.notas_cata || null,
+      maridajes: v.maridajes || [],
+      precio_rango: v.precio_rango || null,
+      precio_usd_min: v.precio_usd_min || null,
+      precio_usd_max: v.precio_usd_max || null,
+      rating: {
+        promedio: v.puntuacion || null,
+        votos: null
+      },
+      imagen: v.imagen_url || 'https://images.vivino.com/thumbs/ApnIiXjcJFnV1lDXnFo6iQ_pb_x600.png',
+      destacado: v.destacado || false,
+      disponible_rd: v.disponible_rd !== false
+    };
+  }
+
+  async obtenerVinosPorTipo(tipo) {
     try {
-      const response = await fetch(`${WINE_API_BASE}/${tipo}`);
-      const vinos = await response.json();
-      
-      return vinos.map(vino => ({
-        id: vino.id,
-        nombre: vino.wine,
-        bodega: vino.winery,
-        region: vino.location,
-        tipo: tipo,
-        rating: vino.rating ? {
-          promedio: vino.rating.average,
-          votos: vino.rating.reviews
-        } : null,
-        imagen: vino.image || 'https://via.placeholder.com/300x400?text=Vino'
-      }));
+      const tipoNorm = this.normalizarTipo(tipo);
+      const url = `${this.supabaseUrl}/rest/v1/vinos_catalogo?tipo=eq.${encodeURIComponent(tipoNorm)}&order=puntuacion.desc&limit=50`;
+      const res = await fetch(url, { headers: this.headers });
+      if (!res.ok) throw new Error(`Supabase error ${res.status}`);
+      const vinos = await res.json();
+      return vinos.map(v => this.formatearVino(v));
     } catch (error) {
-      console.error('Error obteniendo vinos:', error);
+      console.error('[VinosAPI] Error obtenerVinosPorTipo:', error.message);
       return [];
     }
   }
 
-  // Buscar vinos por nombre
-  async buscarVino(nombre) {
+  async buscarVino(termino) {
     try {
-      // Buscar en todos los tipos
-      const tipos = ['reds', 'whites', 'sparkling', 'rose', 'dessert', 'port'];
-      const resultados = [];
-
-      for (const tipo of tipos) {
-        const vinos = await this.obtenerVinosPorTipo(tipo);
-        const coincidencias = vinos.filter(v => 
-          v.nombre.toLowerCase().includes(nombre.toLowerCase()) ||
-          v.bodega.toLowerCase().includes(nombre.toLowerCase())
-        );
-        resultados.push(...coincidencias);
-      }
-
-      return resultados;
+      const q = encodeURIComponent(termino);
+      const url = `${this.supabaseUrl}/rest/v1/vinos_catalogo?or=(nombre.ilike.*${q}*,bodega.ilike.*${q}*)&order=puntuacion.desc&limit=30`;
+      const res = await fetch(url, { headers: this.headers });
+      if (!res.ok) throw new Error(`Supabase error ${res.status}`);
+      const vinos = await res.json();
+      return vinos.map(v => this.formatearVino(v));
     } catch (error) {
-      console.error('Error buscando vino:', error);
+      console.error('[VinosAPI] Error buscarVino:', error.message);
       return [];
     }
   }
 
-  // Obtener vinos recomendados (aleatorios de calidad alta)
-  async obtenerRecomendados(limite = 10) {
+  async obtenerRecomendados(limite = 20) {
     try {
-      const tipos = ['reds', 'whites', 'sparkling'];
-      const todosVinos = [];
-
-      for (const tipo of tipos) {
-        const vinos = await this.obtenerVinosPorTipo(tipo);
-        todosVinos.push(...vinos);
-      }
-
-      // Filtrar por rating alto y mezclar aleatoriamente
-      const vinosCalidad = todosVinos.filter(v => 
-        v.rating && v.rating.promedio >= 4.0
-      );
-
-      // Mezclar y tomar los primeros N
-      const mezclados = vinosCalidad.sort(() => Math.random() - 0.5);
-      return mezclados.slice(0, limite);
+      const url = `${this.supabaseUrl}/rest/v1/vinos_catalogo?destacado=eq.true&order=puntuacion.desc&limit=${limite}`;
+      const res = await fetch(url, { headers: this.headers });
+      if (!res.ok) throw new Error(`Supabase error ${res.status}`);
+      const vinos = await res.json();
+      return vinos.map(v => this.formatearVino(v));
     } catch (error) {
-      console.error('Error obteniendo recomendados:', error);
+      console.error('[VinosAPI] Error obtenerRecomendados:', error.message);
       return [];
     }
   }
 
-  // Obtener todos los tipos disponibles
+  async obtenerTodos(limite = 100) {
+    try {
+      const url = `${this.supabaseUrl}/rest/v1/vinos_catalogo?order=puntuacion.desc&limit=${limite}`;
+      const res = await fetch(url, { headers: this.headers });
+      if (!res.ok) throw new Error(`Supabase error ${res.status}`);
+      const vinos = await res.json();
+      return vinos.map(v => this.formatearVino(v));
+    } catch (error) {
+      console.error('[VinosAPI] Error obtenerTodos:', error.message);
+      return [];
+    }
+  }
+
+  async obtenerPorId(id) {
+    try {
+      const url = `${this.supabaseUrl}/rest/v1/vinos_catalogo?id=eq.${id}&limit=1`;
+      const res = await fetch(url, { headers: this.headers });
+      if (!res.ok) throw new Error(`Supabase error ${res.status}`);
+      const vinos = await res.json();
+      if (!vinos.length) return null;
+      return this.formatearVino(vinos[0]);
+    } catch (error) {
+      console.error('[VinosAPI] Error obtenerPorId:', error.message);
+      return null;
+    }
+  }
+
   obtenerTiposDisponibles() {
     return [
-      { id: 'reds', nombre: 'Tintos', descripcion: 'Vinos tintos' },
-      { id: 'whites', nombre: 'Blancos', descripcion: 'Vinos blancos' },
-      { id: 'sparkling', nombre: 'Espumosos', descripcion: 'Champagne y espumosos' },
-      { id: 'rose', nombre: 'Rosados', descripcion: 'Vinos rosados' },
-      { id: 'dessert', nombre: 'Postres', descripcion: 'Vinos de postre' },
-      { id: 'port', nombre: 'Oporto', descripcion: 'Vinos de Oporto' }
+      { id: 'tinto',       nombre: 'Tintos',      descripcion: 'Rioja, Malbec, Bordeaux y mas' },
+      { id: 'blanco',      nombre: 'Blancos',     descripcion: 'Albarino, Sauvignon Blanc, Chardonnay' },
+      { id: 'rosado',      nombre: 'Rosados',     descripcion: 'Provence, rosados espanoles' },
+      { id: 'espumoso',    nombre: 'Espumosos',   descripcion: 'Champagne, Cava, espumosos' },
+      { id: 'fortificado', nombre: 'Fortificados',descripcion: 'Oporto, Jerez y vinos generosos' },
+      { id: 'dulce',       nombre: 'Dulces',      descripcion: 'Vinos de postre y dulces naturales' }
     ];
   }
 }
