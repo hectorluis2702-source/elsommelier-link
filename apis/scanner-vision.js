@@ -3,10 +3,11 @@ const { createClient } = require('@supabase/supabase-js');
 
 class ScannerVision {
   constructor() {
-    this.endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+    // Strip trailing slash to avoid double-slash in URL construction
+    this.endpoint = (process.env.AZURE_OPENAI_ENDPOINT || '').replace(/\/$/, '');
     this.apiKey = process.env.AZURE_OPENAI_KEY;
     this.deployment = process.env.AZURE_OPENAI_DEPLOYMENT || 'Cerebro-Elsommelier-RD';
-    this.apiVersion = process.env.AZURE_OPENAI_API_VERSION || '2024-02-01';
+    this.apiVersion = process.env.AZURE_OPENAI_API_VERSION || '2024-10-21';
 
     this.supabase = createClient(
       process.env.SUPABASE_URL,
@@ -18,7 +19,7 @@ class ScannerVision {
     try {
       const prompt = `Eres un experto sommelier. Analiza la imagen y responde SOLO en JSON con: nombre, bodega, variedad, año, region, denominacion, alcohol, tipo, confianza, notas.`;
 
-     const url = `${this.endpoint}openai/deployments/Cerebro-Elsommelier-RD/chat/completions?api-version=2024-08-01-preview`;
+      const url = `${this.endpoint}/openai/deployments/${this.deployment}/chat/completions?api-version=${this.apiVersion}`;
       console.log('Azure URL:', url);
 
       const apiResponse = await fetch(url, {
