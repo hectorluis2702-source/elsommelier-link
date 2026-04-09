@@ -57,26 +57,8 @@ Responde SOLO en formato JSON así:
     console.log('Azure URL:', url);
     console.log('API Key exists:', !!this.apiKey, 'length:', this.apiKey ? this.apiKey.length : 0);
 
-    const apiResponse = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': this.apiKey
-      },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: prompt },
-                {
-                  type: 'image_url',
-
-      const url = `${this.endpoint}openai/deployments/${this.deployment}/chat/completions?api-version=${this.apiVersion}`;
-      
-      console.log('Azure URL:', url);
-      console.log('API Key exists:', !!this.apiKey, 'length:', this.apiKey ? this.apiKey.length : 0);
-
+    
+         
       const apiResponse = await fetch(url, {
         method: 'POST',
         headers: {
