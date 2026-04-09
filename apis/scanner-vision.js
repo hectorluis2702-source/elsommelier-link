@@ -18,8 +18,7 @@ class ScannerVision {
     try {
       const prompt = `Eres un experto sommelier. Analiza la imagen y responde SOLO en JSON con: nombre, bodega, variedad, año, region, denominacion, alcohol, tipo, confianza, notas.`;
 
-      const url = `${this.endpoint}openai/deployments/${this.deployment}/chat/completions?api-version=${this.apiVersion}`;
-      
+      const url = `${this.endpoint}openai/deployments/Cerebro-Elsommelier-RD/chat/completions?api-version=${this.apiVersion}`;
       console.log('Azure URL:', url);
 
       const apiResponse = await fetch(url, {
