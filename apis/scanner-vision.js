@@ -51,7 +51,7 @@ Responde SOLO en formato JSON así:
   "notas": "observaciones adicionales"
 }`;
 
-      // Llamada directa a Azure OpenAI REST API
+     // Llamada directa a Azure OpenAI REST API
     const url = `${this.endpoint}openai/deployments/${this.deploymentName}/chat/completions?api-version=${this.apiVersion}`;
     
     console.log('Azure URL:', url);
@@ -71,7 +71,7 @@ Responde SOLO en formato JSON así:
                 { type: 'text', text: prompt },
                 {
                   type: 'image_url',
-// Llamada directa a Azure OpenAI REST API
+
       const url = `${this.endpoint}openai/deployments/${this.deployment}/chat/completions?api-version=${this.apiVersion}`;
       
       console.log('Azure URL:', url);
