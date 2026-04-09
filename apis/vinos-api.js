@@ -49,8 +49,10 @@ class VinosAPI {
       precio_usd_max: v.precio_usd_max || null,
       rating: {
         promedio: v.puntuacion || null,
+        fuente: v.fuente_puntuacion || null,
         votos: null
       },
+      puntuacion_rd: v.puntuacion_rd || null,
       imagen: v.imagen_url || 'https://images.vivino.com/thumbs/ApnIiXjcJFnV1lDXnFo6iQ_pb_x600.png',
       destacado: v.destacado || false,
       disponible_rd: v.disponible_rd !== false
