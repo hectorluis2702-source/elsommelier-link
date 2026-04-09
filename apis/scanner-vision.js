@@ -71,6 +71,26 @@ Responde SOLO en formato JSON así:
                 { type: 'text', text: prompt },
                 {
                   type: 'image_url',
+// Llamada directa a Azure OpenAI REST API
+      const url = `${this.endpoint}openai/deployments/${this.deployment}/chat/completions?api-version=${this.apiVersion}`;
+      
+      console.log('Azure URL:', url);
+      console.log('API Key exists:', !!this.apiKey, 'length:', this.apiKey ? this.apiKey.length : 0);
+
+      const apiResponse = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': this.apiKey
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: prompt },
+                {
+                  type: 'image_url',
                   image_url: {
                     url: `data:image/jpeg;base64,${imagenBase64}`
                   }
@@ -80,86 +100,9 @@ Responde SOLO en formato JSON así:
           ],
           max_tokens: 800,
           temperature: 0.3
-     })
+        })
       });
-
-    const response = await apiResponse.json();
-    console.log('Azure response:', JSON.stringify(response));
-
-    if (!response.choices || !response.choices[0]) {
-    throw new Error('No se recibio respuesta de Azure OpenAI');
-    }
-
-     const resultado = response.choices[0].message.content;
-
-      // Parsear JSON de la respuesta
-      let datosVino;
-      try {
-        // Limpiar posibles markdown code blocks
-        const jsonLimpio = resultado
-          .replace(/```json\n?/g, '')
-          .replace(/```\n?/g, '')
-          .trim();
-        
-        datosVino = JSON.parse(jsonLimpio);
-      } catch (parseError) {
-        console.error('Error parseando JSON:', parseError);
-        return {
-          success: false,
-          error: 'No se pudo extraer información estructurada de la imagen',
-          respuestaRaw: resultado
-        };
-      }
-
-      // Enriquecer datos con timestamp
-      datosVino.timestamp = new Date().toISOString();
-      datosVino.metodo = 'GPT-4o Vision';
-      datosVino.userId = userId;
-
-      return {
-        success: true,
-        datos: datosVino,
-        mensaje: 'Etiqueta analizada exitosamente'
-      };
-
-    } catch (error) {
-      console.error('Error analizando etiqueta:', error);
-      return {
-        success: false,
-        error: 'Error procesando la imagen',
-        detalles: error.message
-      };
-    }
-  }
-
-  // Guardar vino escaneado en Supabase
-  async guardarVinoEscaneado(datosVino, userId = 'anonimo', imagenUrl = null) {
-    try {
-      const vinoParaGuardar = {
-        user_id: userId,
-        nombre: datosVino.nombre,
-        bodega: datosVino.bodega,
-        variedad: datosVino.variedad,
-        año: datosVino.año !== 'No visible' ? datosVino.año : null,
-        region: datosVino.region,
-        denominacion: datosVino.denominacion !== 'No visible' ? datosVino.denominacion : null,
-        alcohol: datosVino.alcohol !== 'No visible' ? datosVino.alcohol : null,
-        tipo: datosVino.tipo,
-        imagen_url: imagenUrl,
-        metodo_escaneo: 'GPT-4o Vision',
-        confianza: datosVino.confianza,
-        notas_escaneo: datosVino.notas,
-        fecha_escaneo: new Date().toISOString(),
-        maridajes_sugeridos: [], // Se puede llenar después
-        calificacion_usuario: null,
-        notas_cata: null
-      };
-
-      const { data, error } = await this.supabase
-        .from('vinos_escaneados')
-        .insert([vinoParaGuardar])
-        .select();
-
+                  
       if (error) {
         console.error('Error guardando en Supabase:', error);
         return {
