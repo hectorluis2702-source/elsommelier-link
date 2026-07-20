@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motor Editorial | Enciclopedia del Agave</title>
+    <style>
+        body {
+            background-color: #121212; /* Negro mate */
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px 20px;
+            margin: 0;
+        }
+        h1 {
+            color: #d4af37; /* Dorado */
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            border-top: 4px solid #800020; /* Borgoña */
+        }
+        textarea {
+            width: 100%;
+            height: 180px;
+            background-color: #2a2a2a;
+            color: #ffffff;
+            border: 1px solid #d4af37; /* Acento dorado */
+            border-radius: 4px;
+            padding: 15px;
+            font-size: 16px;
+            resize: vertical;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+        textarea:focus {
+            outline: none;
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+        }
+        button {
+            background-color: #800020; /* Botón borgoña */
+            color: #d4af37; /* Letra dorada */
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s;
+            text-transform: uppercase;
+        }
+        button:hover {
+            background-color: #5a0016;
+        }
+        button:disabled {
+            background-color: #4a4a4a;
+            color: #888;
+            cursor: not-allowed;
+        }
+        #resultado {
+            margin-top: 25px;
+            padding: 15px;
+            border-left: 4px solid #d4af37;
+            background-color: #2a2a2a;
+            display: none;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Motor Editorial Agave</h1>
+        <textarea id="prompt" placeholder="Ej: Desarrolla exhaustivamente la Taxonomía del Agave. Necesito mínimo 4 apartados profundizando en linaje genético, adaptación al estrés hídrico..."></textarea>
+        <button id="btnGenerar" onclick="generarTema()">Iniciar Redacción e Inyectar a Bóveda</button>
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        async function generarTema() {
+            const prompt = document.getElementById('prompt').value;
+            const resultadoDiv = document.getElementById('resultado');
+            const btn = document.getElementById('btnGenerar');
+
+            if (!prompt) {
+                alert("Por favor, ingresa una instrucción para el comité.");
+                return;
+            }
+
+            // Cambiamos el estado del botón mientras carga
+            btn.innerText = "Procesando con el comité editorial... (Espera)";
+            btn.disabled = true;
+            resultadoDiv.style.display = "block";
+            resultadoDiv.innerHTML = "<span style='color: #d4af37;'>Conectando con Supabase y Gemini...</span>";
+
+            try {
+                const response = await fetch('/api/generar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultadoDiv.innerHTML = `<span style='color: #d4af37; font-weight: bold;'>¡Éxito!</span> ${data.mensaje} Revisa tu base de datos en Supabase.`;
+                } else {
+                    resultadoDiv.innerHTML = `<span style='color: #ff5252; font-weight: bold;'>Error:</span> ${data.error}`;
+                }
+            } catch (error) {
+                resultadoDiv.innerHTML = `<span style='color: #ff5252; font-weight: bold;'>Falla de conexión:</span> ${error.message}`;
+            } finally {
+                // Restauramos el botón
+                btn.innerText = "Iniciar Redacción e Inyectar a Bóveda";
+                btn.disabled = false;
+                document.getElementById('prompt').value = '';
+            }
+        }
+    </script>
+</body>
+</html>
