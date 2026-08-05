@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <!-- viewport-fit=cover habilita safe-area-inset en iPhone con notch / Dynamic Island -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <title>Vinotipos - Aprende Enologia Jugando con Corchito</title>
+  <meta name="description" content="Plataforma de gamificacion enologica interactiva. Aprende sobre catas, cepas del mundo, maridajes y regiones vitivinicolas con Corchito.">
+
+  <!-- PWA: Color de barra de estado del navegador (Android Chrome) -->
+  <meta name="theme-color" content="#800020">
+
+  <!-- PWA: Manifest -->
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- PWA: iOS Safari — comportamiento standalone al agregar a pantalla de inicio -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Vinotipos">
+  <link rel="apple-touch-icon" href="/icons/icon.svg">
+
+  <!-- PWA: Windows / Edge -->
+  <meta name="msapplication-TileColor" content="#800020">
+  <meta name="msapplication-TileImage" content="/icons/icon.svg">
+
+  <!-- Preconectar Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./src/styles/main.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- Header inyectado por HeaderProgress.js -->
+    <header id="header-root" role="banner"></header>
+
+    <!-- Area principal de contenido -->
+    <main id="main-content" class="main-content" role="main"></main>
+
+    <!-- Modales (Cava, Regiones) -->
+    <div id="modal-root" role="dialog" aria-modal="true"></div>
+
+    <!-- Toast de Notificaciones -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

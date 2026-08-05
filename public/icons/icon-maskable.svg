@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fondo borgoña lleno (maskable: el sujeto ocupa el 80% central) -->
+  <rect width="512" height="512" fill="#800020"/>
+
+  <defs>
+    <linearGradient id="corkSideM" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#7A5228"/>
+      <stop offset="28%"  stop-color="#D4B07B"/>
+      <stop offset="68%"  stop-color="#C59E68"/>
+      <stop offset="100%" stop-color="#6E4822"/>
+    </linearGradient>
+    <linearGradient id="corkTopM" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#E5C596"/>
+      <stop offset="100%" stop-color="#8C6333"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Corcho (zona segura: ~80% del area, centrado en 102,90 a 410,422) -->
+  <path d="M 175 144 L 175 380 C 175 402 337 402 337 380 L 337 144 Z" fill="url(#corkSideM)"/>
+  <ellipse cx="256" cy="144" rx="81" ry="26" fill="url(#corkTopM)" stroke="#B8860B" stroke-width="2.5"/>
+
+  <!-- Grietas -->
+  <g opacity="0.5">
+    <path d="M 188 170 Q 184 215 188 258" stroke="#6E4723" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M 324 178 Q 328 222 324 265" stroke="#6E4723" stroke-width="4" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Mancha vino base -->
+  <path d="M 175 362 C 175 402 337 402 337 362 C 337 390 175 390 175 362 Z" fill="#600010" opacity="0.9"/>
+
+  <!-- Ojos -->
+  <circle cx="230" cy="236" r="17" fill="#2B180A"/>
+  <circle cx="282" cy="236" r="17" fill="#2B180A"/>
+  <circle cx="236" cy="228" r="6"  fill="#FFFFFF"/>
+  <circle cx="288" cy="228" r="6"  fill="#FFFFFF"/>
+
+  <!-- Sonrisa -->
+  <path d="M 226 270 Q 256 292 286 270" stroke="#2B180A" stroke-width="9" fill="none" stroke-linecap="round"/>
+
+  <!-- Copa dorada -->
+  <g transform="translate(302, 268)">
+    <path d="M 3 0 C 3 30 43 30 43 0 Z" fill="rgba(245,239,224,0.15)" stroke="#B8860B" stroke-width="3"/>
+    <path d="M 9 10 C 9 28 37 28 37 10 Z" fill="#B8860B" opacity="0.85"/>
+    <line x1="23" y1="30" x2="23" y2="52" stroke="#B8860B" stroke-width="3"/>
+    <line x1="11" y1="52" x2="35" y2="52" stroke="#B8860B" stroke-width="3"/>
+  </g>
+</svg>

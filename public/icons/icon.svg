@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fondo oscuro -->
+  <rect width="512" height="512" fill="#121212"/>
+
+  <!-- Cuerpo cilindrico del corcho -->
+  <defs>
+    <linearGradient id="corkSide" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#7A5228"/>
+      <stop offset="28%"  stop-color="#D4B07B"/>
+      <stop offset="68%"  stop-color="#C59E68"/>
+      <stop offset="100%" stop-color="#6E4822"/>
+    </linearGradient>
+    <linearGradient id="corkTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#E5C596"/>
+      <stop offset="70%"  stop-color="#BA945E"/>
+      <stop offset="100%" stop-color="#8C6333"/>
+    </linearGradient>
+    <linearGradient id="wineStain" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="transparent"/>
+      <stop offset="100%" stop-color="#800020"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Paredes del cilindro -->
+  <path d="M 148 122 L 148 388 C 148 414 364 414 364 388 L 364 122 Z" fill="url(#corkSide)"/>
+
+  <!-- Tapa superior ovalada -->
+  <ellipse cx="256" cy="122" rx="108" ry="35" fill="url(#corkTop)" stroke="#B8860B" stroke-width="3"/>
+
+  <!-- Grietas de corcho naturales -->
+  <g opacity="0.55">
+    <path d="M 162 165 Q 158 220 163 275" stroke="#6E4723" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M 350 180 Q 354 240 349 295" stroke="#6E4723" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <circle cx="172" cy="148" r="5" fill="#4A2E16"/>
+    <circle cx="340" cy="160" r="6" fill="#4A2E16"/>
+    <circle cx="165" cy="310" r="5" fill="#4A2E16"/>
+    <circle cx="347" cy="330" r="5" fill="#4A2E16"/>
+  </g>
+
+  <!-- Mancha de vino tinto en la base -->
+  <path d="M 148 368 C 148 414 364 414 364 368 C 364 404 148 404 148 368 Z" fill="url(#wineStain)" opacity="0.9"/>
+
+  <!-- Ojos (estado idle curioso) -->
+  <circle cx="214" cy="225" r="22" fill="#2B180A"/>
+  <circle cx="298" cy="225" r="22" fill="#2B180A"/>
+  <circle cx="222" cy="215" r="8"  fill="#FFFFFF"/>
+  <circle cx="306" cy="215" r="8"  fill="#FFFFFF"/>
+
+  <!-- Sonrisa -->
+  <path d="M 210 272 Q 256 302 302 272" stroke="#2B180A" stroke-width="11" fill="none" stroke-linecap="round"/>
+
+  <!-- Copita de vino dorada (mano derecha) -->
+  <g transform="translate(322, 285)">
+    <path d="M 4 0 C 4 42 58 42 58 0 Z" fill="rgba(245,239,224,0.15)" stroke="#B8860B" stroke-width="4"/>
+    <path d="M 12 14 C 12 38 50 38 50 14 Z" fill="#B8860B" opacity="0.85"/>
+    <line x1="31" y1="42" x2="31" y2="72" stroke="#B8860B" stroke-width="4"/>
+    <line x1="14" y1="72" x2="48" y2="72" stroke="#B8860B" stroke-width="4"/>
+  </g>
+
+  <!-- Acento dorado en el borde superior del cilindro -->
+  <rect x="148" y="118" width="216" height="10" rx="3" fill="#B8860B" opacity="0.45"/>
+</svg>
