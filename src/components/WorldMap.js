@@ -1,12 +1,27 @@
 import { REGIONS_DATA } from '../data/regionsData.js';
 import { gameState } from '../services/GameState.js';
 import { Corchito } from './Corchito.js';
+import { CourseEngine } from './CourseEngine.js';
+import { RouteAnimation } from './RouteAnimation.js';
+import { pickPhrase, PHRASES } from '../data/corchitoPhrases.js';
 
 export class WorldMap {
   constructor(containerEl, modalContainerEl) {
     this.container = containerEl;
     this.modalContainer = modalContainerEl || document.getElementById('modal-root');
     this.corchitoModalInstance = null;
+    this.courseEngineInstance = null;
+    this.mapHostEl = null;
+    this.pendingRouteAnimation = null;
+    this.routeAnimationInstance = null;
+
+    // Fase 2 (prompt 2): cuando gameState desbloquea una region nueva (gate de
+    // 80% real, no decorativo), animamos a Corchito viajando hasta ella.
+    this.offRegionUnlocked = gameState.on('region:unlocked', (region) => {
+      const from = REGIONS_DATA.find(r => r.id === gameState.state.currentRegionId) || region;
+      this.pendingRouteAnimation = { from, to: region };
+      this.tryPlayPendingAnimation();
+    });
 
     this.unsubscribe = gameState.subscribe(() => {
       this.render();
@@ -50,6 +65,7 @@ export class WorldMap {
     `;
 
     this.container.innerHTML = html;
+    this.mapHostEl = this.container.querySelector('.world-map-container');
 
     this.container.querySelectorAll('.region-card').forEach(card => {
       card.addEventListener('click', () => {
@@ -61,6 +77,27 @@ export class WorldMap {
           this.openRegionModal(region);
         }
       });
+    });
+
+    this.tryPlayPendingAnimation();
+  }
+
+  // Reproduce la animación de ruta guardada en cuanto el mapa esté visible y
+  // sin ningún otro modal (reto, revelación) tapándolo.
+  tryPlayPendingAnimation() {
+    if (!this.pendingRouteAnimation || !this.mapHostEl) return;
+    if (this.modalContainer && this.modalContainer.innerHTML.trim() !== '') return;
+
+    const { from, to } = this.pendingRouteAnimation;
+    this.pendingRouteAnimation = null;
+
+    this.routeAnimationInstance = new RouteAnimation(this.mapHostEl, {
+      from,
+      to,
+      onComplete: () => {
+        this.routeAnimationInstance = null;
+        gameState.setCurrentRegion(to.id);
+      }
     });
   }
 
@@ -93,6 +130,10 @@ export class WorldMap {
               <li><strong>Varietales Estrella:</strong> ${region.terroirInfo.varietales.join(', ')}</li>
             </ul>
           </div>
+
+          <button id="btn-start-challenge" class="btn-header region-modal-cta">
+            \ud83c\udfaf Comenzar Reto
+          </button>
         </div>
       </div>
     `;
@@ -100,7 +141,7 @@ export class WorldMap {
     const corchitoSlot = this.modalContainer.querySelector('#corchito-modal-slot');
     if (corchitoSlot) {
       this.corchitoModalInstance = new Corchito(corchitoSlot);
-      this.corchitoModalInstance.setState('acierto', `\u00a1Bienvenido a ${region.name}!`);
+      this.corchitoModalInstance.setState('acierto', pickPhrase(PHRASES.bienvenidaRegion, region.name));
     }
 
     this.modalContainer.querySelector('#btn-close-region-modal')
@@ -110,6 +151,9 @@ export class WorldMap {
       .addEventListener('click', (e) => {
         if (e.target.id === 'region-modal-overlay') this.closeRegionModal();
       });
+
+    this.modalContainer.querySelector('#btn-start-challenge')
+      .addEventListener('click', () => this.openCourseEngine(region));
   }
 
   closeRegionModal() {
@@ -120,8 +164,31 @@ export class WorldMap {
     if (this.modalContainer) this.modalContainer.innerHTML = '';
   }
 
+  // Fase 2 (prompt 2): abre el motor de preguntas real para la region elegida,
+  // reemplazando el modal educativo por el reto (misma ranura de modal-root).
+  openCourseEngine(region) {
+    if (!this.modalContainer) return;
+    this.closeRegionModal();
+
+    this.courseEngineInstance = new CourseEngine(this.modalContainer, region, {
+      onClose: () => this.closeCourseEngine()
+    });
+  }
+
+  closeCourseEngine() {
+    if (this.courseEngineInstance) {
+      this.courseEngineInstance.destroy();
+      this.courseEngineInstance = null;
+    }
+    if (this.modalContainer) this.modalContainer.innerHTML = '';
+    this.tryPlayPendingAnimation();
+  }
+
   destroy() {
     this.closeRegionModal();
+    this.closeCourseEngine();
+    if (this.routeAnimationInstance) this.routeAnimationInstance.destroy();
+    if (this.offRegionUnlocked) this.offRegionUnlocked();
     if (this.unsubscribe) this.unsubscribe();
   }
 }

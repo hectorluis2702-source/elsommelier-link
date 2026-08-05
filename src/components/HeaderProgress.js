@@ -14,11 +14,17 @@ export class HeaderProgress {
   render() {
     if (!this.container) return;
     const state = gameState.state;
+    const lives = typeof state.lives === 'number' ? state.lives : 5;
+
+    const livesHtml = Array.from({ length: 5 }, (_, i) => {
+      const filled = i < lives;
+      return `<span class="life-cup${filled ? '' : ' life-cup-empty'}">\u{1F377}</span>`;
+    }).join('');
 
     const html = `
       <div class="header-bar glass-panel">
         <a href="#" class="brand-logo" id="btn-brand">
-          🍷 VINOTIPOS <span class="brand-badge">Fase 1</span>
+          🍷 VINOTIPOS <span class="brand-badge">Fase 2</span>
         </a>
 
         <div class="user-stats">
@@ -41,6 +47,11 @@ export class HeaderProgress {
             <span>🍾</span><span class="btn-header-label">&nbsp;La Cava Digital</span>
           </button>
         </div>
+      </div>
+
+      <div class="lives-bar glass-panel" role="img" aria-label="${lives} de 5 vidas restantes">
+        <span class="lives-bar-label">Vidas de Corchito</span>
+        <div class="lives-cups">${livesHtml}</div>
       </div>
     `;
 

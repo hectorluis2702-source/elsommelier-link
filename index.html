@@ -36,6 +36,9 @@
     <!-- Header inyectado por HeaderProgress.js -->
     <header id="header-root" role="banner"></header>
 
+    <!-- Aviso de racha en riesgo (StreakBanner.js) -->
+    <div id="streak-banner-root"></div>
+
     <!-- Area principal de contenido -->
     <main id="main-content" class="main-content" role="main"></main>
 
@@ -44,7 +47,13 @@
 
     <!-- Toast de Notificaciones -->
     <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Advertencia legal permanente (consumo responsable) -->
+    <footer id="footer-root" class="app-footer" role="contentinfo"></footer>
   </div>
+
+  <!-- Verificacion de edad 18+: bloquea el resto de la app hasta confirmar -->
+  <div id="age-gate-root"></div>
 
   <script type="module" src="./src/main.js"></script>
 </body>

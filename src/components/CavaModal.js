@@ -1,16 +1,22 @@
 import { BOTTLES_CATALOG } from '../data/cavaData.js';
 import { gameState } from '../services/GameState.js';
+import { VINOTIPOS_CATALOG } from '../data/vinotiposData.js';
 
 export class CavaModal {
-  constructor(containerEl, onClose) {
+  constructor(containerEl, onClose, onOpenShop) {
     this.container = containerEl;
     this.onClose = onClose;
+    this.onOpenShop = onOpenShop;
+    // La carga de progreso contra Supabase es asincronica: nos suscribimos para
+    // refrescar la grilla de botellas si el estado llega despues de abrir el modal.
+    this.unsubscribe = gameState.subscribe(() => this.render());
     this.render();
   }
 
   render() {
     if (!this.container) return;
     const state = gameState.state;
+    const vinotipo = state.vinotipoType ? VINOTIPOS_CATALOG[state.vinotipoType] : null;
 
     const html = `
       <div class="modal-overlay" id="cava-modal-overlay">
@@ -21,8 +27,16 @@ export class CavaModal {
             <div>
               <h2 class="cava-title">La Cava Digital Coleccionable</h2>
               <p class="cava-subtitle">Coleccion de botellas de vinos reales del mundo desbloqueables por XP.</p>
+              ${vinotipo ? `<p class="cava-vinotipo-tag">${vinotipo.emoji} Tu Vinotipo: <strong>${vinotipo.name}</strong></p>` : ''}
             </div>
           </div>
+
+          ${this.onOpenShop ? `
+            <button id="btn-go-shop" class="shop-cta-banner glass-panel">
+              <span>🛍️</span>
+              <span class="shop-cta-text">Visita la Tienda de Corchito — disfraces con poderes reales</span>
+            </button>
+          ` : ''}
 
           <div class="cava-grid">
             ${BOTTLES_CATALOG.map(bottle => {
@@ -52,18 +66,24 @@ export class CavaModal {
     this.container.innerHTML = html;
 
     this.container.querySelector('#btn-close-cava')
-      .addEventListener('click', () => {
-        this.container.innerHTML = '';
-        if (this.onClose) this.onClose();
-      });
+      .addEventListener('click', () => this.close());
 
     this.container.querySelector('#cava-modal-overlay')
       .addEventListener('click', (e) => {
-        if (e.target.id === 'cava-modal-overlay') {
-          this.container.innerHTML = '';
-          if (this.onClose) this.onClose();
-        }
+        if (e.target.id === 'cava-modal-overlay') this.close();
       });
+
+    this.container.querySelector('#btn-go-shop')?.addEventListener('click', () => {
+      if (this.unsubscribe) this.unsubscribe();
+      this.container.innerHTML = '';
+      if (this.onOpenShop) this.onOpenShop();
+    });
+  }
+
+  close() {
+    if (this.unsubscribe) this.unsubscribe();
+    this.container.innerHTML = '';
+    if (this.onClose) this.onClose();
   }
 
   getRarityColor(rarity) {
