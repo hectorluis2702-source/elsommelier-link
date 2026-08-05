@@ -312,7 +312,12 @@ body {
   position: absolute;
   top: -48px;
   left: 50%;
-  transform: translateX(-50%);
+  /* --bubble-x controla el desplazamiento horizontal: centrado por defecto,
+     pero se sobreescribe abajo cuando Corchito esta pegado a un borde de
+     pantalla (CourseEngine a la izquierda, modal de region a la derecha) para
+     que el globo nunca se corte contra el viewport en moviles angostos. */
+  --bubble-x: -50%;
+  transform: translateX(var(--bubble-x));
   background: var(--color-fondo);
   border: 2px solid var(--color-dorado);
   color: var(--color-crema);
@@ -320,13 +325,16 @@ body {
   border-radius: 14px;
   font-size: 0.8rem;
   font-weight: 700;
-  white-space: nowrap;
+  line-height: 1.35;
+  /* Antes: white-space:nowrap + max-width fijo + ellipsis truncaba el texto
+     en pantallas angostas. Ahora envuelve el texto y limita el ancho al
+     viewport disponible, mostrando la frase completa siempre. */
+  white-space: normal;
+  width: max-content;
+  max-width: min(220px, calc(100vw - 32px));
   box-shadow: 0 8px 16px rgba(0,0,0,0.8);
   z-index: 10;
-  animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  animation: speechPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .corchito-speech-bubble::after {
@@ -340,6 +348,31 @@ body {
   border-color: var(--color-dorado) transparent;
   display: block;
   width: 0;
+}
+
+/* CourseEngine (reto + pantalla "sin vidas"): Corchito vive pegado al borde
+   izquierdo del panel. Anclamos el globo hacia la derecha en vez de
+   centrarlo para que no se corte contra el borde de la pantalla. */
+.ce-panel .corchito-speech-bubble {
+  left: 0;
+  --bubble-x: 0%;
+}
+
+.ce-panel .corchito-speech-bubble::after {
+  left: 24px;
+}
+
+/* Modal de region (parada educativa): Corchito vive pegado al borde derecho.
+   Anclamos el globo hacia la izquierda por la misma razon. */
+.region-modal-header .corchito-speech-bubble {
+  left: auto;
+  right: 0;
+  --bubble-x: 0%;
+}
+
+.region-modal-header .corchito-speech-bubble::after {
+  left: auto;
+  right: 24px;
 }
 
 /* Keyframes */
@@ -367,6 +400,16 @@ body {
 @keyframes popIn {
   0% { opacity: 0; transform: translateX(-50%) scale(0.6) translateY(10px); }
   100% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+}
+
+/* Animacion propia del globo de dialogo (en vez de reutilizar "popIn"): ese
+   nombre se redefine mas abajo para .modal-content en el breakpoint de
+   600px+, y heredar esa redefinicion le quitaria el translateX al globo
+   durante la animacion en tablet/desktop. Usa --bubble-x para respetar el
+   anclaje (centrado, izquierda o derecha) definido en .corchito-speech-bubble. */
+@keyframes speechPopIn {
+  0% { opacity: 0; transform: translateX(var(--bubble-x)) scale(0.6) translateY(10px); }
+  100% { opacity: 1; transform: translateX(var(--bubble-x)) scale(1) translateY(0); }
 }
 
 /* ==========================================================================
