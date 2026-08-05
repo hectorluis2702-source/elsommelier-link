@@ -24,21 +24,21 @@ export class HeaderProgress {
         <div class="user-stats">
           <div class="stat-pill">
             <span class="stat-icon">⭐</span>
-            <span>${state.xp} XP</span>
+            <span>${state.xp}</span><span class="stat-label">&nbsp;XP</span>
           </div>
 
           <div class="stat-pill stat-gold">
             <span class="stat-icon">💎</span>
-            <span>${state.gems} Gemas</span>
+            <span>${state.gems}</span><span class="stat-label">&nbsp;Gemas</span>
           </div>
 
           <div class="stat-pill stat-streak">
             <span class="stat-icon">🔥</span>
-            <span>${state.streak} Días</span>
+            <span>${state.streak}</span><span class="stat-label">&nbsp;Días</span>
           </div>
 
           <button id="btn-cava" class="btn-header">
-            <span>🍾 La Cava Digital</span>
+            <span>🍾</span><span class="btn-header-label">&nbsp;La Cava Digital</span>
           </button>
         </div>
       </div>
