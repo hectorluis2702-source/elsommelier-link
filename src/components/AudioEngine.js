@@ -1,15 +1,18 @@
 /**
  * Fase 2 (prompt 3) — Motor de Efectos de Sonido Diegéticos Sintéticos.
  *
- * 100% Web Audio API (osciladores generados en código, sin archivos .mp3/.wav
- * que descargar): un breve arpegio para acierto/fallo, y una "mini fanfarria"
+ * Web Audio API (osciladores generados en código, sin archivos .mp3/.wav que
+ * descargar): un breve arpegio para acierto/fallo, y una "mini fanfarria"
  * distinta y más satisfactoria para la revelación de botella (el premio).
+ * Se suma la Web Speech API (voz sintetizada del navegador, tampoco requiere
+ * archivos) para que Corchito diga exclamaciones cortas ("¡Yupi!", "¡Oh,
+ * no!") sobre el mismo arpegio — ver speak().
  *
  * REGLA DE ORO: el audio es refuerzo, nunca información esencial. Todo aquí
  * está envuelto en try/catch y se auto-desactiva sin avisar si el navegador
- * bloquea el AudioContext (política de autoplay), si el dispositivo no
- * soporta Web Audio, o si el jugador lo silenció — en ningún caso el juego
- * debe fallar o bloquearse por esto.
+ * bloquea el AudioContext (política de autoplay) o la síntesis de voz, si el
+ * dispositivo no las soporta, o si el jugador lo silenció — en ningún caso el
+ * juego debe fallar o bloquearse por esto.
  */
 
 const MUTE_KEY = 'vinotipos_audio_muted_v1';
@@ -111,6 +114,32 @@ export class AudioEngine {
       this.playTone({ freq, duration: 0.2, type: 'triangle', gain: 0.15, delay: i * 0.09 });
     });
     this.playTone({ freq: 1567.98, duration: 0.4, type: 'sine', gain: 0.12, delay: 0.34 });
+  }
+
+  /**
+   * Exclamación corta de Corchito ("¡Yupi!", "¡Oh, no!") vía Web Speech API
+   * (voz sintetizada del navegador) — complementa el arpegio de tono, nunca
+   * lo reemplaza. Igual que el resto del motor: 100% opcional, envuelto en
+   * try/catch, respeta el mismo mute que playCorrect/playIncorrect, y si el
+   * navegador no soporta síntesis de voz simplemente no dice nada.
+   */
+  speak(text, { pitch = 1.15, rate = 1.05 } = {}) {
+    if (this.muted || !text) return;
+    try {
+      const synth = window.speechSynthesis;
+      if (!synth || typeof SpeechSynthesisUtterance === 'undefined') return;
+      // Corta cualquier exclamación anterior sin terminar — evita que se
+      // amontonen si el jugador responde mas rapido de lo que Corchito habla.
+      synth.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'es-ES';
+      utterance.pitch = pitch;
+      utterance.rate = rate;
+      utterance.volume = 0.9;
+      synth.speak(utterance);
+    } catch (e) {
+      // la voz nunca debe romper el juego
+    }
   }
 }
 

@@ -21,6 +21,10 @@
 }
 ```
 
+**Tipografía (Sistema Visual v2)**: Cormorant Garamond (títulos, itálica en momentos
+hero), DM Sans (cuerpo/UI), DM Mono (datos: XP, Gemas, precios, temporizadores). Ver
+detalle abajo.
+
 ---
 
 ## 📌 Estado de Fases de Desarrollo
@@ -147,3 +151,53 @@
 > comprometer todavía: minijuego "El Restaurante de Corchito" (maridaje), refill de vidas
 > más allá del reset diario automático (`ensureFreshDay`), y cualquier cobro real sobre
 > los flags `isPremium` (hoy son 100% inertes).
+
+---
+
+### 🎨 Sistema Visual v2 (rediseño posterior al sello de Fase 2)
+
+Referencia de diseño: `design-reference/vinotipos-mockup-pantallas-v2-20260805.html`
+(solo mockup visual con datos inventados a mano — nunca código a copiar literal). Se
+extrajeron tokens y estructura, aplicados sobre los componentes reales existentes; **la
+lógica de negocio, GameState.js, Supabase y los datos dinámicos no cambiaron**.
+
+1. **Tokens globales (`styles/main.css`, `index.html`)**:
+   - Tipografía reemplazada: `--font-title` → Cormorant Garamond (antes Outfit),
+     `--font-body` → DM Sans (antes Inter), `--font-mono` → DM Mono (nuevo, para
+     XP/Gemas/precios/temporizador). Cascada automática a casi todos los componentes
+     vía las variables CSS existentes.
+   - Tokens de color derivados **agregados** (no reemplazan a los originales, para no
+     arriesgar usos existentes): `--borgona-light`, `--dorado-light`, `--crema-dim`,
+     `--linea`, `--exito`, `--bg-deep`.
+   - **Pendiente conocido**: `components/Certificate.js` sigue dibujando el certificado
+     en `<canvas>` con `'Outfit'`/`'Inter'` hardcodeados (no usa las variables CSS) — no
+     se tocó porque no estaba en el alcance del rediseño; sería el siguiente candidato
+     si se quiere consistencia total.
+2. **Globo de diálogo de Corchito**: colita real vía `border-radius` asimétrico (ya no
+   un triángulo `::after` aparte) — más simple y no puede desbordar el viewport. Sigue
+   usando el sistema de anclaje `--bubble-x` (centrado/izquierda/derecha) para no repetir
+   el bug de recorte en móvil ya corregido antes de este rediseño.
+3. **`AgeGate.js`**: nuevo paso `renderSplash()` (Corchito, mapa de fondo sutil, titular
+   "Un mundo por descorchar") ANTES de `renderQuestion()` — la pregunta real de edad y
+   `handleYes`/`handleNo` no cambiaron ni un carácter.
+4. **`WorldMap.js`**: la grilla de tarjetas se reemplazó por el concepto "Atlas" — panel
+   con pines (`region.coords` real) + lista de filas debajo. El estado de cada fila
+   (`Dominada` / `Corchito está aquí` / `En progreso` / `Requiere X XP`) y el badge
+   (`aciertos/total`) se calculan con `gameState.computeProgressStats()` real, cacheado
+   en `this.stats` y refrescado al volver de un reto — nunca los datos inventados del
+   mockup.
+5. **`CavaModal.js`**: botellas desbloqueadas con resplandor dorado sutil
+   (`box-shadow`); bloqueadas con un ícono de candado discreto en el mismo lugar que
+   ocupaba el badge de rareza (antes era un bloque de aviso grande).
+6. **Pantalla "Sin Vidas" real (`CourseEngine.js` → `renderBlocked()`)**: antes solo
+   texto plano. Ahora temporizador real hasta el reinicio diario (medianoche UTC, mismo
+   límite que `ensureFreshDay`) y botón "Refrescar con Gemas" conectado a
+   `GameState.refreshLivesWithGems()` (nuevo método aditivo, mismo patrón que
+   `buyStreakFreeze`). Al llegar a 0 el temporizador intenta el reinicio real solo.
+7. **`ShopModal.js`**: tarjetas en grilla → filas `skin-card` (ícono, nombre + buff,
+   precio o "Equipado"). `bindEvents()` (compra/equipar) no se tocó.
+
+> **Nota para Claude Code**: no repetir el patrón de "reemplazar tokens de color
+> existentes" — los nuevos tokens (`--linea`, `--crema-dim`, etc.) se agregaron aparte
+> para no arriesgar los ya usados en decenas de lugares. Si se extiende el sistema
+> visual v2 a más componentes, seguir ese mismo criterio.

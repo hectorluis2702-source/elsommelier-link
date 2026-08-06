@@ -32,7 +32,7 @@ export class ShopModal {
             </div>
           </div>
 
-          <div class="shop-grid">
+          <div class="skin-list">
             ${SKINS_CATALOG.map(skin => this.renderSkinCard(skin, state)).join('')}
           </div>
         </div>
@@ -49,26 +49,24 @@ export class ShopModal {
 
     let actionHtml;
     if (isEquipped) {
-      actionHtml = `<div class="shop-equipped-tag">✓ Equipado</div>`;
+      actionHtml = `<div class="skin-price owned-tag">Equipado</div>`;
     } else if (isPurchased) {
-      actionHtml = `<button class="btn-header shop-action-btn" data-action="equip" data-skin="${skin.id}">Equipar</button>`;
+      actionHtml = `<button class="skin-equip-btn" data-action="equip" data-skin="${skin.id}">Equipar</button>`;
     } else {
       actionHtml = `
-        <button class="btn-header shop-action-btn" data-action="buy" data-skin="${skin.id}" ${canAfford ? '' : 'disabled'}>
-          Comprar · ${skin.price} 💎
+        <button class="skin-buy-btn" data-action="buy" data-skin="${skin.id}" ${canAfford ? '' : 'disabled'}>
+          💎 ${skin.price}
         </button>
       `;
     }
 
     return `
-      <div class="glass-panel shop-card ${isEquipped ? 'shop-card-equipped' : ''}">
-        <div class="bottle-card-top">
-          <span class="bottle-icon">${skin.icon}</span>
-          ${skin.price > 0 ? `<span class="brand-badge shop-price-badge">${skin.price} 💎</span>` : ''}
+      <div class="skin-card ${isEquipped ? 'owned' : ''}">
+        <div class="skin-ic">${skin.icon}</div>
+        <div class="skin-info">
+          <div class="skin-name">${skin.name}</div>
+          <div class="skin-desc">${skin.buffTitle}</div>
         </div>
-        <h3 class="bottle-name">${skin.name}</h3>
-        <div class="shop-buff-tag">⚡ ${skin.buffTitle}</div>
-        <p class="bottle-notes">${skin.buffDesc}</p>
         ${actionHtml}
       </div>
     `;

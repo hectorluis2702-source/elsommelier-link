@@ -13,6 +13,7 @@ const MASTERY_THRESHOLD = 0.8; // 80% de aciertos minimo
 const MIN_QUESTIONS_FOR_MASTERY = 5; // muestra minima antes de considerar "dominada" una region
 const REVIEW_DUE_DAYS = 7; // repeticion espaciada: reaparece 1+ semana despues del ultimo acierto
 const STREAK_FREEZE_COST = 50; // costo en Gemas de "Congelar Racha"
+const LIVES_REFRESH_COST = 20; // costo en Gemas de refrescar las 5 copas antes del reinicio diario
 
 const XP_BY_LEVEL = { 1: 10, 2: 15, 3: 25 };
 const GEMS_BY_LEVEL = { 1: 2, 2: 3, 3: 5 };
@@ -278,6 +279,20 @@ export class GameState {
   // nuevo (ver ensureFreshDay) y queda disponible para futuros refills.
   restoreLives() {
     this.applyAndPersist({ lives: MAX_LIVES });
+  }
+
+  // Sistema Visual v2 — pantalla "Sin Vidas": refresco real pagando Gemas
+  // (mismo patron que buyStreakFreeze). No hace nada si ya hay vidas de sobra
+  // o si no alcanzan las Gemas; en ambos casos devuelve false sin cobrar.
+  refreshLivesWithGems(cost = LIVES_REFRESH_COST) {
+    if (this.state.lives >= MAX_LIVES) return false;
+    if (this.state.gems < cost) return false;
+
+    this.applyAndPersist({
+      gems: this.state.gems - cost,
+      lives: MAX_LIVES
+    });
+    return true;
   }
 
   setCurrentRegion(id) {

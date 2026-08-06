@@ -12,6 +12,10 @@ const SESSION_SIZE = 5;
 // skin_vendimiador ("Escudo de Racha"): sube el umbral de racha_fallos de 2 a 3.
 const RACHA_FALLOS_THRESHOLD_DEFAULT = 2;
 const RACHA_FALLOS_THRESHOLD_SHIELDED = 3;
+// Mismo costo que GameState.refreshLivesWithGems (constante duplicada a
+// propósito, mismo patrón que STREAK_FREEZE_COST en StreakBanner.js — solo
+// para mostrar el precio en el botón; el cobro real vive en GameState).
+const LIVES_REFRESH_COST = 20;
 
 /**
  * CourseEngine — Fase 2 (prompt 2). Motor real de preguntas de maridaje/terroir.
@@ -37,6 +41,11 @@ export class CourseEngine {
     this.pendingBottleReveal = null;
     this.selectedOption = null;
     this.answered = false;
+    this.blockedTimerInterval = null;
+    this.destroyed = false;
+    // Token que invalida el setTimeout de auto-avance si el jugador cierra
+    // el reto (o llega otra respuesta) antes de que se cumplan los ~900ms.
+    this.autoAdvanceToken = 0;
 
     this.offBottleUnlock = gameState.on('bottle:unlocked', (bottle) => {
       this.pendingBottleReveal = bottle;
@@ -75,23 +84,85 @@ export class CourseEngine {
     `;
   }
 
+  // Pantalla "Sin Vidas" (Sistema Visual v2) — tono de animo, nunca de culpa:
+  // temporizador real hasta el reinicio diario + refresco real con Gemas.
   renderBlocked() {
     if (!this.container) return;
+    this.clearBlockedTimer();
+
+    const canAfford = gameState.state.gems >= LIVES_REFRESH_COST;
+
     this.container.innerHTML = `
       <div class="modal-overlay" id="ce-overlay">
-        <div class="modal-content glass-panel ce-panel">
+        <div class="modal-content glass-panel ce-panel ce-blocked-panel">
           <button id="ce-close" class="modal-close-btn" aria-label="Cerrar">&#x2715;</button>
-          <div id="ce-corchito-slot" class="corchito-modal-slot"></div>
+          <div id="ce-corchito-slot" class="corchito-modal-slot ce-blocked-corchito"></div>
+          <h3 class="ce-blocked-title">Corchito necesita<br>un respiro</h3>
           <p class="ce-blocked-text">${pickPhrase(PHRASES.sinVidas)}</p>
+          <div class="ce-blocked-timer" id="ce-blocked-timer" aria-live="polite">--:--:--</div>
+          <button id="ce-refresh-lives" class="btn-header ce-blocked-refresh-btn" ${canAfford ? '' : 'disabled'}>
+            💎 Refrescar con ${LIVES_REFRESH_COST} Gemas
+          </button>
+          <p class="ce-blocked-ghost">Esperar el reinicio diario</p>
         </div>
       </div>
     `;
+
     const slot = this.container.querySelector('#ce-corchito-slot');
     if (slot) {
       this.corchito = new Corchito(slot);
       this.corchito.setState('bloqueado');
     }
+
     this.bindOverlayClose();
+    this.startBlockedTimer();
+
+    this.container.querySelector('#ce-refresh-lives')?.addEventListener('click', () => {
+      const refreshed = gameState.refreshLivesWithGems(LIVES_REFRESH_COST);
+      if (refreshed) {
+        this.clearBlockedTimer();
+        this.start();
+      }
+    });
+  }
+
+  // Cuenta regresiva real hasta el proximo reinicio diario (medianoche UTC,
+  // el mismo limite que usa GameState.ensureFreshDay). Al llegar a 0, intenta
+  // el reinicio de verdad — si funciona, arranca la sesion sola.
+  startBlockedTimer() {
+    const tick = () => {
+      const now = new Date();
+      const nextMidnightUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0);
+      const msLeft = nextMidnightUtc - now.getTime();
+
+      if (msLeft <= 0) {
+        this.clearBlockedTimer();
+        gameState.ensureFreshDay();
+        if (gameState.state.lives > 0) {
+          this.start();
+        } else {
+          this.startBlockedTimer();
+        }
+        return;
+      }
+
+      const totalSeconds = Math.floor(msLeft / 1000);
+      const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+      const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+      const s = String(totalSeconds % 60).padStart(2, '0');
+      const timerEl = this.container?.querySelector('#ce-blocked-timer');
+      if (timerEl) timerEl.textContent = `${h}:${m}:${s}`;
+    };
+
+    tick();
+    this.blockedTimerInterval = setInterval(tick, 1000);
+  }
+
+  clearBlockedTimer() {
+    if (this.blockedTimerInterval) {
+      clearInterval(this.blockedTimerInterval);
+      this.blockedTimerInterval = null;
+    }
   }
 
   renderShell() {
@@ -263,21 +334,37 @@ export class CourseEngine {
           ? pickPhrase(PHRASES.rachaAciertos2)
           : pickPhrase(PHRASES.acierto);
       this.corchito?.setState('acierto', phrase);
+      this.corchito?.playCorchitoReaction('acierto', { streak: this.correctStreakInSession });
     } else {
       audioEngine.playIncorrect();
       this.correctStreakInSession = 0;
       const isRachaFallos = result.consecutiveErrors >= rachaThreshold;
       const phrase = isRachaFallos ? pickPhrase(PHRASES.rachaFallos) : pickPhrase(PHRASES.fallo);
       this.corchito?.setState(isRachaFallos ? 'racha_fallos' : 'fallo', phrase);
+      this.corchito?.playCorchitoReaction('fallo', { isRachaFallos });
     }
 
     this.showFeedback(q, isCorrect);
 
     const actionBtn = this.container.querySelector('#ce-action-btn');
-    if (actionBtn) actionBtn.textContent = 'Continuar';
 
-    if (result.lives <= 0) {
-      if (actionBtn) actionBtn.textContent = 'Ver resumen';
+    if (isCorrect) {
+      // Auto-avance: el feedback de "¡Correcto!" ya comunica el resultado,
+      // asi que no pedimos un toque manual — Corchito reacciona y ~900ms
+      // despues seguimos solos a la siguiente pregunta.
+      if (actionBtn) {
+        actionBtn.style.display = 'none';
+        actionBtn.disabled = true;
+      }
+      const advanceToken = ++this.autoAdvanceToken;
+      window.setTimeout(() => {
+        if (this.destroyed || advanceToken !== this.autoAdvanceToken) return;
+        this.advance();
+      }, 900);
+    } else {
+      // Fallo: el jugador necesita tiempo para leer por que fallo, nunca lo
+      // apuramos — se queda el boton manual "Continuar".
+      if (actionBtn) actionBtn.textContent = result.lives <= 0 ? 'Ver resumen' : 'Continuar';
     }
   }
 
@@ -322,12 +409,17 @@ export class CourseEngine {
   // Avance de sesión
   // ==========================================================================
   async advance() {
+    if (this.destroyed) return;
+
     if (gameState.state.lives <= 0) {
       await this.finishSession(true);
       return;
     }
 
     if (this.pendingBottleReveal) {
+      // Corchito se queda quieto, expectante, antes de que aparezca la botella.
+      await this.corchito?.playCorchitoReaction('suspenso');
+      if (this.destroyed) return;
       this.showBottleReveal();
       return;
     }
@@ -363,8 +455,16 @@ export class CourseEngine {
 
   async finishSession(outOfLives) {
     const sessionResult = await gameState.completeChallengeSession();
+    if (this.destroyed) return;
     const body = this.container.querySelector('#ce-body');
     if (!body) return;
+
+    // Reto completado de verdad (no interrumpido por falta de vidas): saltos
+    // de celebracion + confeti antes de mostrar el resumen.
+    if (!outOfLives) {
+      await this.corchito?.playCorchitoReaction('celebracion');
+      if (this.destroyed) return;
+    }
 
     // Preguntas realmente respondidas: si se quedo sin vidas, la actual (indice
     // corriente) ya cuenta; si termino normal, se respondieron todas.
@@ -379,6 +479,11 @@ export class CourseEngine {
       : null;
 
     if (vinotipo) {
+      if (this.destroyed) return;
+      // Mismo lenguaje de suspenso que antes de una botella, ahora sobre el
+      // momento del Vinotipo.
+      await this.corchito?.playCorchitoReaction('suspenso');
+      if (this.destroyed) return;
       body.innerHTML = '';
       new VinotipoReveal(body, vinotipo, () => {
         this.renderSessionSummary(outOfLives, attempted, sessionResult);
@@ -443,6 +548,9 @@ export class CourseEngine {
   }
 
   destroy() {
+    this.destroyed = true;
+    this.autoAdvanceToken += 1;
+    this.clearBlockedTimer();
     if (this.offBottleUnlock) this.offBottleUnlock();
     if (this.corchito) this.corchito.destroy();
   }

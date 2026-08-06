@@ -100,6 +100,24 @@ export const PHRASES = {
 };
 
 /**
+ * Exclamaciones cortas para la voz sintetizada de Corchito
+ * (AudioEngine.speak, disparada desde Corchito.playCorchitoReaction).
+ * A diferencia de PHRASES (frases largas para el globo de dialogo), estas
+ * son interjecciones breves pensadas para decirse en voz alta. Usan los
+ * mismos umbrales de racha que ya elige el texto del globo en CourseEngine
+ * (>=2, >=4), para que voz + globo + salto escalen juntos en el mismo
+ * momento — y el mismo animo de siempre: nunca hay regaño en el fallo.
+ */
+export const VOICE_LINES = {
+  acierto: ['¡Yupi!', '¡Toma esa!', '¡Así se hace!', '¡Exacto!'],
+  rachaAciertos2: ['¡Vamos bien!', '¡Qué racha!', '¡Sigue, sigue!'],
+  rachaAciertos4: ['¡Imparable!', '¡Vas que vuelas!', '¡Nivel sommelier!'],
+  fallo: ['¡Oh, no!', '¡Uy!', '¡Casi!'],
+  rachaFallos: ['Tranquilo, respira', 'Vamos con calma', 'Tú puedes, sigue'],
+  celebracion: ['¡Lo logramos!', '¡Reto completado!', '¡Excelente cata!']
+};
+
+/**
  * Elige una frase al azar de un array (o del resultado de una función que
  * recibe args, para las frases que necesitan interpolar datos).
  */

@@ -15,6 +15,13 @@ export class WorldMap {
     this.pendingRouteAnimation = null;
     this.routeAnimationInstance = null;
 
+    // Estadisticas reales por region (aciertos/total desde region_answer_history),
+    // usadas por la fila de cada region en el Atlas ("Dominada"/"En progreso"/
+    // badge X/Y). Se cachean en memoria y se refrescan en los puntos donde el
+    // usuario vuelve a ver el mapa, no en cada notificacion de gameState (eso
+    // dispararia una lectura a Supabase por cada XP/gema ganada durante un reto).
+    this.stats = null;
+
     // Fase 2 (prompt 2): cuando gameState desbloquea una region nueva (gate de
     // 80% real, no decorativo), animamos a Corchito viajando hasta ella.
     this.offRegionUnlocked = gameState.on('region:unlocked', (region) => {
@@ -26,7 +33,15 @@ export class WorldMap {
     this.unsubscribe = gameState.subscribe(() => {
       this.render();
     });
-    this.render();
+    this.refreshStatsAndRender();
+  }
+
+  async refreshStatsAndRender() {
+    this.stats = await gameState.computeProgressStats();
+    // Si la animacion de ruta (GSAP) esta reproduciendose, no pisamos su DOM a
+    // mitad de camino: su propio onComplete llama a gameState.setCurrentRegion,
+    // que ya dispara un render() (con this.stats ya fresco) al terminar.
+    if (!this.routeAnimationInstance) this.render();
   }
 
   render() {
@@ -34,32 +49,33 @@ export class WorldMap {
     const state = gameState.state;
 
     const html = `
-      <div class="world-map-container glass-panel">
+      <div class="world-map-container glass-panel atlas-container">
         <div class="map-header">
           <div>
-            <h2 class="map-title">Mapa Mundial de Regiones Vitivinicolas</h2>
+            <h2 class="map-title">Atlas del Vino</h2>
             <p class="map-subtitle">Explora los terroirs mas emblematicos del mundo con Corchito</p>
           </div>
         </div>
 
-        <div class="regions-grid">
+        <div class="atlas-panel">
+          <div class="atlas-grain"></div>
           ${REGIONS_DATA.map(region => {
             const isUnlocked = state.unlockedRegionIds.includes(region.id);
-            const isActive = state.currentRegionId === region.id;
-            const reqText = !isUnlocked && region.reqXP ? `Requiere ${region.reqXP} XP` : '';
-
             return `
-              <div class="region-card ${isActive ? 'active' : ''} ${!isUnlocked ? 'locked' : ''}" data-id="${region.id}">
-                <div class="region-header">
-                  <span class="region-country">${region.country}</span>
-                  <span class="region-badge">${isUnlocked ? '\u{1F513} Disponible' : '\u{1F512} ' + reqText}</span>
-                </div>
-                <h3 class="region-name">${region.flag} ${region.name}</h3>
-                <p class="region-desc">${region.description}</p>
-                ${isActive ? `<div class="region-active-indicator">Corchito esta en esta region</div>` : ''}
-              </div>
+              <button type="button" class="atlas-pin ${isUnlocked ? 'active' : 'locked'}"
+                style="top:${region.coords.y}%; left:${region.coords.x}%;"
+                data-id="${region.id}" title="${region.name}"
+                aria-label="${region.name}${isUnlocked ? '' : ' (bloqueada)'}">
+                ${region.flag}
+              </button>
             `;
           }).join('')}
+        </div>
+
+        <p class="atlas-caption">Toca una región para continuar tu ruta con Corchito</p>
+
+        <div class="atlas-list">
+          ${REGIONS_DATA.map(region => this.renderRegionRow(region, state)).join('')}
         </div>
       </div>
     `;
@@ -67,19 +83,58 @@ export class WorldMap {
     this.container.innerHTML = html;
     this.mapHostEl = this.container.querySelector('.world-map-container');
 
-    this.container.querySelectorAll('.region-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const id = card.getAttribute('data-id');
-        const region = REGIONS_DATA.find(r => r.id === id);
-        const isUnlocked = gameState.state.unlockedRegionIds.includes(id);
-        if (isUnlocked && region) {
-          gameState.setCurrentRegion(id);
-          this.openRegionModal(region);
-        }
-      });
+    this.container.querySelectorAll('.atlas-pin, .atlas-row').forEach(el => {
+      el.addEventListener('click', () => this.handleRegionClick(el.getAttribute('data-id')));
     });
 
     this.tryPlayPendingAnimation();
+  }
+
+  handleRegionClick(id) {
+    const region = REGIONS_DATA.find(r => r.id === id);
+    const isUnlocked = gameState.state.unlockedRegionIds.includes(id);
+    if (isUnlocked && region) {
+      gameState.setCurrentRegion(id);
+      this.openRegionModal(region);
+    }
+  }
+
+  // Estado real de una region para su fila en el Atlas — nunca datos inventados:
+  // "Corchito está aquí" viene de state.currentRegionId, "Dominada"/"En progreso"
+  // y el badge X/Y vienen de this.stats (region_answer_history real).
+  renderRegionRow(region, state) {
+    const isUnlocked = state.unlockedRegionIds.includes(region.id);
+    const isCurrent = state.currentRegionId === region.id;
+    const stat = this.stats?.byRegion.get(region.id);
+    const mastered = isUnlocked && !!this.stats && gameState.isRegionMastered(this.stats, region.id);
+
+    let statusText;
+    if (!isUnlocked) {
+      statusText = `Requiere ${region.reqXP} XP`;
+    } else if (isCurrent) {
+      statusText = 'Corchito está aquí';
+    } else if (mastered) {
+      statusText = 'Dominada';
+    } else if (stat && stat.total > 0) {
+      statusText = 'En progreso';
+    } else {
+      statusText = 'Aún sin practicar';
+    }
+
+    const badge = !isUnlocked
+      ? '🔒'
+      : (stat && stat.total > 0 ? `${stat.correct}/${stat.total}` : '—');
+
+    return `
+      <div class="atlas-row ${!isUnlocked ? 'locked' : ''} ${isCurrent ? 'current' : ''}" data-id="${region.id}">
+        <div class="atlas-row-flag">${region.flag}</div>
+        <div class="atlas-row-info">
+          <div class="atlas-row-name">${region.name}</div>
+          <div class="atlas-row-sub">${statusText}</div>
+        </div>
+        <div class="atlas-row-badge">${badge}</div>
+      </div>
+    `;
   }
 
   // Reproduce la animación de ruta guardada en cuanto el mapa esté visible y
@@ -181,6 +236,9 @@ export class WorldMap {
       this.courseEngineInstance = null;
     }
     if (this.modalContainer) this.modalContainer.innerHTML = '';
+    // El reto pudo haber generado respuestas nuevas (region_answer_history) —
+    // refrescamos las estadisticas reales antes de volver a mostrar el Atlas.
+    this.refreshStatsAndRender();
     this.tryPlayPendingAnimation();
   }
 

@@ -24,7 +24,7 @@ export class HeaderProgress {
     const html = `
       <div class="header-bar glass-panel">
         <a href="#" class="brand-logo" id="btn-brand">
-          🍷 VINOTIPOS <span class="brand-badge">Fase 2</span>
+          🍷 VINOTIPOS
         </a>
 
         <div class="user-stats">

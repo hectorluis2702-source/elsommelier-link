@@ -47,13 +47,16 @@ export class CavaModal {
                 <div class="glass-panel bottle-card ${isUnlocked ? 'unlocked' : 'locked'}">
                   <div class="bottle-card-top">
                     <span class="bottle-icon">${bottle.imageIcon}</span>
-                    <span class="brand-badge" style="background:${this.getRarityColor(bottle.rarity)};color:#FFF;">${bottle.rarity}</span>
+                    ${isUnlocked
+                      ? `<span class="brand-badge" style="background:${this.getRarityColor(bottle.rarity)};color:#FFF;">${bottle.rarity}</span>`
+                      : `<span class="bottle-lock-badge" aria-label="Bloqueada">&#x1F512;</span>`
+                    }
                   </div>
                   <h3 class="bottle-name">${bottle.name}</h3>
                   <div class="bottle-region">${bottle.region} &bull; ${bottle.type}</div>
                   ${isUnlocked
                     ? `<p class="bottle-notes"><strong>Notas Sommelier:</strong> ${bottle.notes}</p>`
-                    : `<div class="bottle-locked-info">&#x1F512; ${reqText}</div>`
+                    : `<p class="bottle-req-hint">${reqText}</p>`
                   }
                 </div>
               `;
