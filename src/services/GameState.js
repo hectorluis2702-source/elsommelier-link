@@ -565,6 +565,52 @@ export class GameState {
   }
 
   // ==========================================================================
+  // "El Restaurante de Corchito" — Etapa 1: trivia de maridaje.
+  //
+  // Reutiliza el mismo sistema de XP/Gemas/vidas/racha que las regiones —
+  // addXP/addGems/recordError/resetErrors/registerDailyActivity son los
+  // MISMOS métodos de arriba, no una copia. Lo único propio es la
+  // persistencia del historial (pairing_answer_history), porque el esquema
+  // de contenido es distinto (plato, no región) y no debe mezclarse con
+  // region_answer_history ni con el gate de 80% de regiones.
+  // ==========================================================================
+
+  /**
+   * Persiste una respuesta real de maridaje y aplica XP/Gemas/vidas — mismo
+   * punto de entrada que recordAnswer(), pero contra pairing_answer_history.
+   */
+  async recordPairingAnswer({ dishId, level, isCorrect }) {
+    if (this.userId) {
+      const { error } = await supabase.from('pairing_answer_history').insert({
+        user_id: this.userId,
+        dish_id: dishId,
+        difficulty_level: level,
+        is_correct: isCorrect
+      });
+      if (error) console.error('Error al guardar respuesta de maridaje en el historial:', error);
+    }
+
+    if (isCorrect) {
+      this.resetErrors();
+      this.addXP(XP_BY_LEVEL[level] || 10);
+      this.addGems(GEMS_BY_LEVEL[level] || 2);
+    } else {
+      this.recordError();
+    }
+
+    return { lives: this.state.lives, consecutiveErrors: this.state.consecutiveErrors };
+  }
+
+  /**
+   * Cierre de una sesión del Restaurante: misma mecánica de racha/día que
+   * completeChallengeSession() (registerDailyActivity), sin el gate de
+   * regiones (Etapa 1 no desbloquea regiones ni calcula el Vinotipo).
+   */
+  completePairingSession() {
+    return this.registerDailyActivity();
+  }
+
+  // ==========================================================================
   // Racha con pérdida real + "Congelar Racha"
   // ==========================================================================
 

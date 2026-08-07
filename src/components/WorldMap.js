@@ -2,6 +2,7 @@ import { REGIONS_DATA } from '../data/regionsData.js';
 import { gameState } from '../services/GameState.js';
 import { Corchito } from './Corchito.js';
 import { CourseEngine } from './CourseEngine.js';
+import { RestaurantEngine } from './RestaurantEngine.js';
 import { RouteAnimation } from './RouteAnimation.js';
 import { pickPhrase, PHRASES } from '../data/corchitoPhrases.js';
 
@@ -11,6 +12,7 @@ export class WorldMap {
     this.modalContainer = modalContainerEl || document.getElementById('modal-root');
     this.corchitoModalInstance = null;
     this.courseEngineInstance = null;
+    this.restaurantEngineInstance = null;
     this.mapHostEl = null;
     this.pendingRouteAnimation = null;
     this.routeAnimationInstance = null;
@@ -74,6 +76,11 @@ export class WorldMap {
 
         <p class="atlas-caption">Toca una región para continuar tu ruta con Corchito</p>
 
+        <button type="button" id="btn-open-restaurant" class="shop-cta-banner glass-panel">
+          <span>🍽️</span>
+          <span class="shop-cta-text">El Restaurante de Corchito — trivia de maridaje</span>
+        </button>
+
         <div class="atlas-list">
           ${REGIONS_DATA.map(region => this.renderRegionRow(region, state)).join('')}
         </div>
@@ -86,6 +93,9 @@ export class WorldMap {
     this.container.querySelectorAll('.atlas-pin, .atlas-row').forEach(el => {
       el.addEventListener('click', () => this.handleRegionClick(el.getAttribute('data-id')));
     });
+
+    this.container.querySelector('#btn-open-restaurant')
+      ?.addEventListener('click', () => this.openRestaurantEngine());
 
     this.tryPlayPendingAnimation();
   }
@@ -242,9 +252,31 @@ export class WorldMap {
     this.tryPlayPendingAnimation();
   }
 
+  // "El Restaurante de Corchito" (Etapa 1) — minijuego independiente de las
+  // regiones: no requiere desbloqueo, se abre directo desde el Atlas y usa la
+  // misma ranura de modal-root que CourseEngine.
+  openRestaurantEngine() {
+    if (!this.modalContainer) return;
+    this.restaurantEngineInstance = new RestaurantEngine(this.modalContainer, {
+      onClose: () => this.closeRestaurantEngine()
+    });
+  }
+
+  closeRestaurantEngine() {
+    if (this.restaurantEngineInstance) {
+      this.restaurantEngineInstance.destroy();
+      this.restaurantEngineInstance = null;
+    }
+    if (this.modalContainer) this.modalContainer.innerHTML = '';
+    // La sesion pudo haber ganado XP/Gemas (afecta el reqXP mostrado en el
+    // Atlas) — refrescamos igual que al cerrar un reto de region.
+    this.refreshStatsAndRender();
+  }
+
   destroy() {
     this.closeRegionModal();
     this.closeCourseEngine();
+    this.closeRestaurantEngine();
     if (this.routeAnimationInstance) this.routeAnimationInstance.destroy();
     if (this.offRegionUnlocked) this.offRegionUnlocked();
     if (this.unsubscribe) this.unsubscribe();

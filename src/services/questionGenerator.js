@@ -1,4 +1,5 @@
 import { REGIONS_DATA } from '../data/regionsData.js';
+import { PAIRINGS_CATALOG } from '../data/pairingData.js';
 
 /**
  * Fase 2 (prompt 2) — Generador de preguntas reales de maridaje/terroir.
@@ -149,6 +150,60 @@ export function buildSessionQuestions(region, { reviewRegion = null, count = 5 }
   }
 
   return questions;
+}
+
+// ==========================================================================
+// "El Restaurante de Corchito" — Etapa 1: trivia de maridaje.
+//
+// Reutiliza EXACTAMENTE el mismo patron que las preguntas de region de
+// arriba: la respuesta correcta es un dato curado real (PAIRINGS_CATALOG,
+// nunca inventado aqui) y los distractores son vinos REALES de otros platos
+// del mismo catalogo — nunca se inventan. Tambien reutiliza shuffle/pickRandom
+// ya definidos en este archivo, sin duplicarlos.
+// ==========================================================================
+
+// 'uva' (mas simple) / 'copa' / 'barrica' (mas compleja) del catalogo curado
+// mapean 1:1 a los niveles 1/2/3 que ya usa CourseEngine para XP/Gemas
+// (10/2, 15/3, 25/5) — no se inventa una escala de puntaje paralela.
+const DIFFICULTY_TO_LEVEL = { uva: 1, copa: 2, barrica: 3 };
+// Mismo criterio que buildRecognitionQuestion (2 opciones) vs
+// buildDistractorQuestion (4 opciones): a mas dificultad, mas distractores.
+const OPTIONS_COUNT_BY_LEVEL = { 1: 2, 2: 4, 3: 4 };
+
+function otherPairings(dishId) {
+  return PAIRINGS_CATALOG.filter(p => p.id !== dishId);
+}
+
+function buildPairingQuestion(pairing) {
+  const level = DIFFICULTY_TO_LEVEL[pairing.difficulty] || 2;
+  const optionsCount = Math.min(OPTIONS_COUNT_BY_LEVEL[level], PAIRINGS_CATALOG.length);
+  const distractors = pickRandom(otherPairings(pairing.id), optionsCount - 1).map(p => p.wine);
+
+  return {
+    level,
+    mode: 'maridaje',
+    dishId: pairing.id,
+    hasImage: false,
+    imageEmoji: pairing.emoji,
+    descriptionText: pairing.dish,
+    inputType: 'choice',
+    prompt: `¿Qué vino marida mejor con: ${pairing.dish}?`,
+    options: shuffle([pairing.wine, ...distractors]),
+    correctAnswer: pairing.wine,
+    // Feedback educativo con vocabulario SAT — texto literal del catalogo
+    // curado, nunca generado aqui.
+    mechanism: pairing.mechanism,
+    justification: pairing.justification
+  };
+}
+
+/**
+ * Arma la tanda de preguntas de una sesión del Restaurante: platos elegidos
+ * al azar sin repetir, uno por pregunta (mismo estilo que buildSessionQuestions).
+ */
+export function buildPairingSessionQuestions(count = 5) {
+  return pickRandom(PAIRINGS_CATALOG, Math.min(count, PAIRINGS_CATALOG.length))
+    .map(buildPairingQuestion);
 }
 
 /**

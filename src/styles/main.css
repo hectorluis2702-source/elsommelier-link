@@ -1643,6 +1643,22 @@ body {
   color: #ff8f9c;
 }
 
+/* ==========================================================================
+   EL RESTAURANTE DE CORCHITO — Etapa 1: trivia de maridaje.
+   Reutiliza casi todas las clases .ce-* de arriba (mismo look que un reto de
+   region); esta es la unica clase nueva: el "por que" SAT dentro del feedback.
+   ========================================================================== */
+.re-justification {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(245, 239, 224, 0.15);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--crema-dim);
+}
+
 .ce-action-btn {
   width: 100%;
   min-height: 50px;
