@@ -23,8 +23,8 @@ function imageSlide(f, blocks, img) {
   const s = deck.addSlide();
   const b = S.frame(s, f);
   const top = b.top + 8, avail = b.bottom - top - 8;
-  const iw = img.w;
-  const imgH = Math.min(avail, Math.round(iw * img.hpx / img.wpx));
+  const imgH = Math.min(avail, Math.round(img.w * img.hpx / img.wpx));
+  const iw = Math.round(imgH * img.wpx / img.hpx);
   s.addImage({ path: img.path, x: S.px(1204 - iw), y: S.px(top), w: S.px(iw), h: S.px(imgH), altText: img.alt });
   const tw = 1204 - iw - 48 - 76;
   const step = Math.floor(avail / blocks.length);
