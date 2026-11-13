@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "PWA — El Sommelier RD",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", ".", "--listen", "3000", "--no-clipboard"],
+      "port": 3000
+    },
+    {
+      "name": "Backend API — El Sommelier RD",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nodemon", "/tmp/elsommelier-backend/server.js"],
+      "port": 3001
+    }
+  ]
+}

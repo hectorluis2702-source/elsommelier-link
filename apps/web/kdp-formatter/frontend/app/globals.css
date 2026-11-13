@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-matte-950 text-cream;
+  }
+}
+
+@layer components {
+  .gold-divider {
+    @apply h-px w-16 bg-gradient-to-r from-transparent via-gold-200 to-transparent;
+  }
+
+  .kdp-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 2px;
+    border-radius: 9999px;
+    background: linear-gradient(to right, theme("colors.gold.200"), theme("colors.burgundy.700"));
+  }
+  .kdp-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    background: theme("colors.gold.200");
+    border: 2px solid theme("colors.matte.950");
+    box-shadow: 0 0 0 1px theme("colors.gold.200" / 40%);
+    cursor: pointer;
+  }
+  .kdp-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    background: theme("colors.gold.200");
+    border: 2px solid theme("colors.matte.950");
+    cursor: pointer;
+  }
+}

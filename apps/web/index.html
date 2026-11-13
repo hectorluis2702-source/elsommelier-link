@@ -1,0 +1,2664 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#121212" />
+  <meta name="description" content="El Sommelier RD — La inteligencia vinícola del Caribe" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="El Sommelier RD" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <title>El Sommelier RD</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+
+  <style>
+    :root {
+      --bg: #121212;
+      --bg-card: #1a1a1a;
+      --bg-elevated: #222222;
+      --burgundy: #800020;
+      --burgundy-light: #a0002a;
+      --gold: #B8860B;
+      --gold-light: #D4A017;
+      --cream: #F5EFE0;
+      --cream-dim: #c8bfa8;
+      --text: #F5EFE0;
+      --text-dim: #9a9080;
+      --border: rgba(184,134,11,0.18);
+      --border-hover: rgba(184,134,11,0.45);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 8px 40px rgba(0,0,0,0.6);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { height: 100%; scroll-behavior: smooth; }
+
+    body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── GRAIN OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9999; opacity: 0.35;
+    }
+
+    /* ── SPLASH / LOADER ── */
+    #splash {
+      position: fixed; inset: 0;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 10000;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+    #splash.hidden { opacity: 0; visibility: hidden; }
+
+    .splash-monogram {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 5rem;
+      font-weight: 300;
+      color: var(--gold);
+      letter-spacing: 0.1em;
+      animation: fadeIn 1.2s ease forwards;
+      line-height: 1;
+    }
+    .splash-subtitle {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.35em;
+      color: var(--text-dim);
+      margin-top: 1rem;
+      text-transform: uppercase;
+      animation: fadeIn 1.5s ease forwards;
+    }
+    .splash-bar {
+      width: 120px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin-top: 2.5rem;
+      animation: expand 2s ease 0.5s both;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    @keyframes expand { from { width: 0; opacity: 0; } to { width: 120px; opacity: 1; } }
+
+    /* ── APP SHELL ── */
+    #app { display: flex; flex-direction: column; min-height: 100vh; opacity: 0; transition: opacity 0.6s ease; }
+    #app.visible { opacity: 1; }
+
+    /* ── HEADER ── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      padding: 1.1rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(18,18,18,0.92);
+      backdrop-filter: blur(20px) saturate(1.5);
+      -webkit-backdrop-filter: blur(20px) saturate(1.5);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex; align-items: center; gap: 0.7rem;
+    }
+    .logo-emblem {
+      width: 36px; height: 36px;
+      border: 1px solid var(--gold);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      color: var(--gold);
+      font-style: italic;
+    }
+    .logo-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.15rem;
+      font-weight: 400;
+      color: var(--cream);
+      letter-spacing: 0.04em;
+    }
+    .logo-text span { color: var(--gold); }
+
+    .header-status {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+    }
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #2d8a4e;
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+    }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+      padding: 0 0.5rem;
+      gap: 0;
+    }
+    nav::-webkit-scrollbar { display: none; }
+
+    .nav-btn {
+      flex-shrink: 0;
+      padding: 0.9rem 1.1rem;
+      background: none; border: none;
+      color: var(--text-dim);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+      display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
+    }
+    .nav-btn .nav-icon { font-size: 1.1rem; }
+    .nav-btn:hover { color: var(--cream); }
+    .nav-btn.active {
+      color: var(--gold);
+      border-bottom-color: var(--gold);
+    }
+
+    /* ── MAIN CONTENT ── */
+    main { flex: 1; padding: 1.5rem 1.2rem 6rem; max-width: 600px; margin: 0 auto; width: 100%; }
+
+    /* ── SECTIONS ── */
+    .section { display: none; animation: sectionIn 0.35s ease; }
+    .section.active { display: block; }
+    @keyframes sectionIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    /* ── HERO ── */
+    .hero {
+      text-align: center;
+      padding: 2rem 0 1.5rem;
+      position: relative;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -2rem; left: 50%; transform: translateX(-50%);
+      width: 300px; height: 300px;
+      background: radial-gradient(ellipse, rgba(128,0,32,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-greeting {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.2rem, 8vw, 3rem);
+      font-weight: 300;
+      line-height: 1.15;
+      color: var(--cream);
+      margin-bottom: 0.75rem;
+    }
+    .hero-title em { color: var(--gold); font-style: italic; }
+    .hero-sub {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+      max-width: 320px;
+      margin: 0 auto 2rem;
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.3rem;
+      margin-bottom: 1rem;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover { border-color: var(--border-hover); box-shadow: var(--shadow); }
+
+    .card-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.25em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.25rem;
+      font-weight: 400;
+      color: var(--cream);
+      margin-bottom: 0.4rem;
+    }
+    .card-body { font-size: 0.8rem; color: var(--text-dim); line-height: 1.6; }
+
+    /* ── QUICK ACCESS GRID ── */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin: 1.5rem 0;
+    }
+    .quick-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.2rem 0.8rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-align: center;
+    }
+    .quick-card:hover {
+      border-color: var(--gold);
+      background: var(--bg-elevated);
+      transform: translateY(-2px);
+    }
+    .quick-card .icon { font-size: 1.6rem; margin-bottom: 0.5rem; }
+    .quick-card .label {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.9rem;
+      color: var(--cream);
+    }
+    .quick-card .desc { font-size: 0.6rem; color: var(--text-dim); margin-top: 0.2rem; }
+
+    /* ── DIVIDER ── */
+    .divider {
+      display: flex; align-items: center; gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px;
+      background: var(--border);
+    }
+    .divider span {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* ── CHAT (SOMMELIER) ── */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 220px);
+      min-height: 400px;
+    }
+    .chat-header {
+      display: flex; align-items: center; gap: 0.8rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
+    .maestro-avatar {
+      width: 44px; height: 44px;
+      border: 1px solid var(--gold);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      color: var(--gold);
+      font-style: italic;
+      flex-shrink: 0;
+    }
+    .maestro-info h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      color: var(--cream);
+    }
+    .maestro-info p { font-size: 0.65rem; color: var(--text-dim); }
+
+    #chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding-right: 0.3rem;
+    }
+    #chat-messages::-webkit-scrollbar { width: 4px; }
+    #chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .msg {
+      max-width: 85%;
+      animation: msgIn 0.3s ease;
+    }
+    @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    .msg.user { align-self: flex-end; }
+    .msg.maestro { align-self: flex-start; }
+
+    .msg-bubble {
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      font-size: 0.82rem;
+      line-height: 1.65;
+    }
+    .msg.user .msg-bubble {
+      background: var(--burgundy);
+      color: var(--cream);
+      border-bottom-right-radius: 4px;
+    }
+    .msg.maestro .msg-bubble {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--cream);
+      border-bottom-left-radius: 4px;
+    }
+    .msg-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 0.3rem;
+    }
+    .msg.user .msg-label { text-align: right; }
+
+    .typing-indicator {
+      display: flex; gap: 4px; padding: 0.75rem 1rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      border-bottom-left-radius: 4px;
+      width: fit-content;
+    }
+    .typing-indicator span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--gold);
+      animation: typing 1.2s infinite;
+    }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing { 0%, 60%, 100% { opacity: 0.2; transform: scale(0.9); } 30% { opacity: 1; transform: scale(1.1); } }
+
+    .chat-input-area {
+      display: flex; gap: 0.6rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .chat-input {
+      flex: 1;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.7rem 1rem;
+      color: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      resize: none;
+      outline: none;
+      transition: border-color 0.25s;
+      min-height: 44px;
+      max-height: 120px;
+    }
+    .chat-input::placeholder { color: var(--text-dim); }
+    .chat-input:focus { border-color: var(--gold); }
+
+    .send-btn {
+      width: 44px; height: 44px;
+      border-radius: var(--radius-sm);
+      background: var(--burgundy);
+      border: none; cursor: pointer;
+      color: var(--cream);
+      font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s ease;
+      flex-shrink: 0;
+    }
+    .send-btn:hover { background: var(--burgundy-light); }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── MARIDAJE ── */
+    .maridaje-input-group { margin-bottom: 1rem; }
+    .maridaje-input-group label {
+      display: block;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .maridaje-input-group input, .maridaje-input-group select {
+      width: 100%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.7rem 1rem;
+      color: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      outline: none;
+      transition: border-color 0.25s;
+      -webkit-appearance: none;
+    }
+    .maridaje-input-group input::placeholder { color: var(--text-dim); }
+    .maridaje-input-group input:focus,
+    .maridaje-input-group select:focus { border-color: var(--gold); }
+    .maridaje-input-group select option { background: var(--bg-elevated); }
+
+    .platos-grid {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .plato-chip {
+      padding: 0.4rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: none;
+    }
+    .plato-chip:hover, .plato-chip.selected {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(184,134,11,0.08);
+    }
+
+    /* ── BTN PRIMARY ── */
+    .btn-primary {
+      width: 100%;
+      padding: 0.85rem;
+      background: linear-gradient(135deg, var(--burgundy), var(--burgundy-light));
+      border: 1px solid rgba(128,0,32,0.6);
+      border-radius: var(--radius);
+      color: var(--cream);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, var(--burgundy-light), #c0003a);
+      box-shadow: 0 4px 20px rgba(128,0,32,0.4);
+      transform: translateY(-1px);
+    }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── MARIDAJE RESULT ── */
+    .maridaje-result { margin-top: 1.5rem; }
+    .maridaje-vino-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.2rem;
+      margin-bottom: 0.75rem;
+      border-left: 3px solid var(--gold);
+    }
+    .maridaje-vino-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      color: var(--cream);
+      margin-bottom: 0.3rem;
+    }
+    .maridaje-vino-region {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.58rem;
+      color: var(--gold);
+      letter-spacing: 0.15em;
+      margin-bottom: 0.6rem;
+    }
+    .maridaje-vino-razon { font-size: 0.78rem; color: var(--cream-dim); line-height: 1.6; margin-bottom: 0.5rem; }
+    .maridaje-vino-poetica {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: var(--gold);
+      border-top: 1px solid var(--border);
+      padding-top: 0.6rem;
+      margin-top: 0.6rem;
+    }
+    .consejo-maestro {
+      background: linear-gradient(135deg, rgba(128,0,32,0.12), rgba(184,134,11,0.06));
+      border: 1px solid rgba(184,134,11,0.25);
+      border-radius: var(--radius);
+      padding: 1.2rem;
+      margin-top: 1rem;
+    }
+    .consejo-maestro .label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.25em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .consejo-maestro p { font-size: 0.82rem; color: var(--cream); line-height: 1.65; font-style: italic; }
+
+    /* ── VINOS ── */
+    .search-bar {
+      display: flex; gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .search-input {
+      flex: 1;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 1rem;
+      color: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      outline: none;
+      transition: border-color 0.25s;
+    }
+    .search-input:focus { border-color: var(--gold); }
+    .search-input::placeholder { color: var(--text-dim); }
+    .search-btn {
+      padding: 0 1rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--gold);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+    .search-btn:hover { border-color: var(--gold); }
+
+    /* ── FILTER PILLS (Vinos) ── */
+    .filter-pills {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .filter-pill {
+      padding: 0.4rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: none;
+    }
+    .filter-pill:hover, .filter-pill.active {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(184,134,11,0.08);
+    }
+    .filter-pill .dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 0.4rem;
+      vertical-align: middle;
+    }
+
+    .vino-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 0.75rem;
+      transition: all 0.25s;
+      cursor: pointer;
+    }
+    .vino-item:hover { border-color: var(--border-hover); transform: translateX(3px); }
+    .vino-color-dot {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+    .vino-info { flex: 1; }
+    .vino-nombre {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      color: var(--cream);
+    }
+    .vino-meta {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.58rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      margin-top: 0.2rem;
+    }
+    .vino-precio {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    /* ── CATA LAB ── */
+    .cata-upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 3rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: var(--bg-card);
+      margin-bottom: 1rem;
+    }
+    .cata-upload-zone:hover {
+      border-color: var(--gold);
+      background: var(--bg-elevated);
+    }
+    .cata-upload-zone .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .cata-upload-zone .title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      color: var(--cream);
+      margin-bottom: 0.3rem;
+    }
+    .cata-upload-zone .subtitle { font-size: 0.72rem; color: var(--text-dim); }
+    .cata-upload-zone input[type="file"] { display: none; }
+
+    .cata-preview {
+      display: none;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .cata-preview img {
+      max-width: 100%;
+      max-height: 300px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin-bottom: 0.75rem;
+    }
+
+    #cata-result { margin-top: 1rem; }
+
+    /* ── BODEGA ── */
+    .bodega-empty {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+    .bodega-empty .icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+    .bodega-empty .title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      color: var(--cream);
+      margin-bottom: 0.5rem;
+    }
+    .bodega-empty .subtitle { font-size: 0.75rem; color: var(--text-dim); line-height: 1.6; }
+
+    .bodega-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .bodega-stat {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.8rem 0.5rem;
+      text-align: center;
+    }
+    .bodega-stat .value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      color: var(--gold);
+    }
+    .bodega-stat .label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.5rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 0.2rem;
+    }
+
+    #bodega-list { margin-top: 1rem; }
+
+    /* ── PERFIL ── */
+    .perfil-hero {
+      text-align: center;
+      padding: 2rem 0 1.5rem;
+    }
+    .perfil-avatar {
+      width: 72px; height: 72px;
+      border: 2px solid var(--gold);
+      border-radius: 50%;
+      margin: 0 auto 1rem;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      color: var(--gold);
+      font-style: italic;
+      background: var(--bg-elevated);
+    }
+    .perfil-nombre {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      color: var(--cream);
+      margin-bottom: 0.3rem;
+    }
+    .perfil-nivel {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin: 1.5rem 0;
+    }
+    .stat-box {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1rem 0.5rem;
+      text-align: center;
+    }
+    .stat-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.8rem;
+      color: var(--gold);
+      line-height: 1;
+    }
+    .stat-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.52rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      margin-top: 0.3rem;
+      text-transform: uppercase;
+    }
+
+    .xp-bar-container { margin: 1rem 0; }
+    .xp-bar-label {
+      display: flex; justify-content: space-between;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      margin-bottom: 0.5rem;
+    }
+    .xp-bar {
+      height: 4px;
+      background: var(--bg-elevated);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .xp-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--burgundy), var(--gold));
+      border-radius: 2px;
+      width: 0;
+      transition: width 1.2s ease;
+    }
+
+    /* ── ACADEMIA ── */
+    .nivel-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .nivel-badge.bronce { background: rgba(184,134,11,0.12); border: 1px solid rgba(184,134,11,0.3); color: #cd7f32; }
+    .nivel-badge.plata { background: rgba(192,192,192,0.1); border: 1px solid rgba(192,192,192,0.3); color: #c0c0c0; }
+    .nivel-badge.oro { background: rgba(184,134,11,0.15); border: 1px solid rgba(184,134,11,0.4); color: var(--gold); }
+    .nivel-badge.diplomado { background: rgba(98,0,2,0.2); border: 1px solid rgba(232,200,64,0.5); color: #E8C840; }
+
+    .leccion-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem;
+      margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 1rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .leccion-card:hover { border-color: var(--border-hover); }
+    .leccion-card.diplomado-card {
+      border-color: rgba(232,200,64,0.2);
+      background: linear-gradient(135deg, var(--bg-card) 0%, rgba(98,0,2,0.08) 100%);
+    }
+    .leccion-card.diplomado-card:hover { border-color: rgba(232,200,64,0.5); }
+    .leccion-card.diplomado-card .leccion-num {
+      border-color: rgba(232,200,64,0.4);
+      color: #E8C840;
+    }
+    .leccion-num {
+      width: 36px; height: 36px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+    .leccion-card.completada .leccion-num {
+      background: rgba(45,138,78,0.15);
+      border-color: rgba(45,138,78,0.3);
+      color: #2d8a4e;
+    }
+    .leccion-titulo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.95rem;
+      color: var(--cream);
+    }
+    .leccion-dur {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.58rem;
+      color: var(--text-dim);
+      margin-top: 0.2rem;
+    }
+    .leccion-arrow { margin-left: auto; color: var(--text-dim); font-size: 0.8rem; }
+    .modulo-header {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      color: var(--gold);
+      text-transform: uppercase;
+      padding: 1.2rem 0 0.6rem;
+      border-top: 1px solid var(--border);
+      margin-top: 0.5rem;
+    }
+    .modulo-header:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+    .modulo-header-diplomado {
+      color: #E8C840;
+      border-top: 1px solid rgba(232,200,64,0.4);
+      font-size: 0.68rem;
+      letter-spacing: 0.15em;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+    }
+
+    /* ── VISOR DE LECCIÓN ── */
+    .leccion-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: #0d0d0d;
+      display: flex; flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+      overflow: hidden;
+    }
+    .leccion-overlay.open { transform: translateX(0); }
+    .leccion-header {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+      flex-shrink: 0;
+    }
+    .leccion-back-btn {
+      background: none; border: 1px solid var(--border);
+      color: var(--gold); border-radius: 50%;
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1.1rem; flex-shrink: 0;
+      transition: border-color 0.2s;
+    }
+    .leccion-back-btn:hover { border-color: var(--gold); }
+    .leccion-header-info { flex: 1; min-width: 0; }
+    .leccion-header-titulo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem; color: var(--cream);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .leccion-header-meta {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.58rem; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-top: 0.2rem;
+    }
+    .leccion-body {
+      flex: 1; overflow-y: auto;
+      padding: 1.5rem 1.2rem 4rem;
+    }
+    .leccion-imagen {
+      width: 100%; height: 180px; object-fit: cover;
+      border-radius: var(--radius); margin-bottom: 1.5rem;
+      border: 1px solid var(--border);
+    }
+    .leccion-seccion-titulo {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.62rem; letter-spacing: 0.12em;
+      color: var(--gold); text-transform: uppercase;
+      margin: 1.8rem 0 0.8rem;
+    }
+    .leccion-contenido {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem; line-height: 1.75;
+      color: var(--cream-dim);
+      white-space: pre-wrap;
+    }
+    .leccion-objetivo {
+      display: flex; gap: 0.75rem; align-items: flex-start;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid rgba(184,134,11,0.1);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.95rem; color: var(--cream-dim); line-height: 1.5;
+    }
+    .leccion-objetivo::before {
+      content: '✦'; color: var(--gold); font-size: 0.6rem;
+      margin-top: 0.35rem; flex-shrink: 0;
+    }
+    .quiz-container { margin-top: 0.5rem; }
+    .quiz-pregunta {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .quiz-pregunta-texto {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem; color: var(--cream); margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+    .quiz-opcion {
+      display: block; width: 100%; text-align: left;
+      padding: 0.7rem 1rem; margin-bottom: 0.5rem;
+      background: rgba(184,134,11,0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--cream-dim); cursor: pointer;
+      font-family: 'Cormorant Garamond', serif; font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+    .quiz-opcion:hover { border-color: var(--gold); color: var(--cream); }
+    .quiz-opcion.correcta { border-color: #2d8a4e; background: rgba(45,138,78,0.12); color: #7dcfa0; }
+    .quiz-opcion.incorrecta { border-color: #c0392b; background: rgba(192,57,43,0.1); color: #e07070; }
+    .leccion-completar-btn {
+      display: block; width: 100%;
+      margin-top: 2rem; padding: 1rem;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: #1a1000; font-weight: 700;
+      font-family: 'DM Mono', monospace; font-size: 0.75rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      border: none; border-radius: var(--radius);
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .leccion-completar-btn:hover { opacity: 0.9; }
+    .leccion-loading {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 4rem 2rem; gap: 1rem;
+      color: var(--text-dim); font-family: 'DM Mono', monospace; font-size: 0.75rem;
+    }
+
+    /* ── VINO OVERLAY ── */
+    .vino-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: #0d0d0d;
+      display: flex; flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+      overflow: hidden;
+    }
+    .vino-overlay.open { transform: translateX(0); }
+    .vino-overlay-header {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+      flex-shrink: 0;
+    }
+    .vino-overlay-body {
+      flex: 1; overflow-y: auto;
+      padding: 0 0 4rem;
+    }
+    .vino-hero {
+      position: relative; height: 200px; overflow: hidden;
+      background: linear-gradient(135deg, #1a0a00 0%, #2a1000 100%);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .vino-hero-img {
+      height: 100%; width: 100%; object-fit: cover; opacity: 0.6;
+    }
+    .vino-hero-badge {
+      position: absolute; top: 1rem; right: 1rem;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.3rem 0.7rem;
+      font-family: 'DM Mono', monospace; font-size: 0.58rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--gold);
+    }
+    .vino-overlay-content { padding: 1.5rem 1.2rem; }
+    .vino-overlay-nombre {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.7rem; color: var(--cream);
+      line-height: 1.15; margin-bottom: 0.3rem;
+    }
+    .vino-overlay-bodega {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem; color: var(--gold);
+      letter-spacing: 0.1em; text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .vino-detail-row {
+      display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.2rem;
+    }
+    .vino-detail-chip {
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.3rem 0.7rem;
+      font-family: 'DM Mono', monospace; font-size: 0.6rem;
+      letter-spacing: 0.07em; color: var(--cream-dim);
+    }
+    .vino-seccion-titulo {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.58rem; letter-spacing: 0.14em;
+      color: var(--gold); text-transform: uppercase;
+      margin: 1.6rem 0 0.7rem;
+    }
+    .vino-nota-cata {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem; line-height: 1.8;
+      color: var(--cream-dim);
+    }
+    .vino-maridaje-tag {
+      display: inline-block;
+      background: rgba(184,134,11,0.08);
+      border: 1px solid rgba(184,134,11,0.25);
+      border-radius: var(--radius-sm);
+      padding: 0.35rem 0.8rem; margin: 0.25rem 0.25rem 0 0;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.9rem; color: var(--cream-dim);
+    }
+    .vino-rating-big {
+      display: flex; align-items: baseline; gap: 0.4rem;
+      margin-bottom: 0.3rem;
+    }
+    .vino-rating-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.5rem; color: var(--gold); line-height: 1;
+    }
+    .vino-rating-stars { color: var(--gold); font-size: 1rem; }
+    .vino-bodega-btn {
+      display: block; width: 100%;
+      margin-top: 2rem; padding: 1rem;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: #1a1000; font-weight: 700;
+      font-family: 'DM Mono', monospace; font-size: 0.75rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      border: none; border-radius: var(--radius);
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .vino-bodega-btn:hover { opacity: 0.9; }
+    .vino-bodega-btn.ya-agregado {
+      background: transparent;
+      border: 1px solid var(--border); color: var(--text-dim);
+    }
+    /* ── BADGE RD ── */
+    .rd-badge-wrap {
+      position: relative;
+      display: inline-block;
+      width: 150px;
+      height: 150px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+    .rd-badge-img {
+      /* zoom 1.18 para eliminar borde blanco exterior */
+      width: 177px;
+      height: 177px;
+      display: block;
+      margin: -13.5px;
+      object-fit: cover;
+    }
+    .rd-badge-num {
+      position: absolute;
+      top: 19%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: Georgia, 'Times New Roman', serif;
+      font-style: italic;
+      font-weight: bold;
+      color: #E8C840;
+      /* cubre el número original del JPEG fundiéndose con el fondo */
+      background: radial-gradient(ellipse 120% 140% at 50% 55%, #6e2223 0%, #620002 30%, #5a0001 70%, #4e0001 100%);
+      padding: 4px 18px 6px;
+      border-radius: 50%;
+      white-space: nowrap;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+      line-height: 1.1;
+      min-width: 68px;
+      text-align: center;
+    }
+
+    /* ── PUNTUACIONES DUAL ── */
+    .puntuaciones-grid {
+      display: flex; align-items: center; gap: 1.5rem;
+      background: rgba(184,134,11,0.04);
+      border: 1px solid rgba(184,134,11,0.15);
+      border-radius: var(--radius); padding: 1.2rem 1rem;
+      margin-bottom: 0.5rem;
+    }
+    .puntuacion-rd-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+      flex-shrink: 0;
+    }
+    .puntuacion-rd-label {
+      font-family: 'DM Mono', monospace; font-size: 0.5rem;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--gold); text-align: center;
+    }
+    .puntuacion-ext-wrap {
+      display: flex; flex-direction: column; align-items: flex-start;
+      border-left: 1px solid rgba(184,134,11,0.2); padding-left: 1.2rem;
+      flex: 1;
+    }
+    .puntuacion-ext-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.8rem; color: var(--cream-dim); line-height: 1;
+    }
+    .puntuacion-ext-fuente {
+      font-family: 'DM Mono', monospace; font-size: 0.6rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-dim); margin-top: 0.3rem;
+    }
+    .puntuacion-ext-pts {
+      font-family: 'DM Mono', monospace; font-size: 0.55rem;
+      color: var(--text-dim); margin-top: 0.1rem;
+    }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 5.5rem; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.7rem 1.3rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--cream);
+      opacity: 0;
+      transition: all 0.35s ease;
+      z-index: 500;
+      white-space: nowrap;
+      box-shadow: var(--shadow);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── LOADING ── */
+    .loading-spinner {
+      display: flex; align-items: center; justify-content: center;
+      padding: 2rem;
+      color: var(--text-dim);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      gap: 0.75rem;
+    }
+    .spinner {
+      width: 16px; height: 16px;
+      border: 1px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── RESPONSIVE ── */
+    @media (min-width: 600px) {
+      main { padding: 2rem 1.5rem 7rem; }
+      .quick-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (min-width: 768px) {
+      main { max-width: 720px; }
+    }
+
+    /* ─── MAPA DE REGIONES VINÍCOLAS ─── */
+    #sec-mapa { padding: 0; position: relative; }
+    #wine-map {
+      width: 100%;
+      height: calc(100dvh - 120px);
+      background: #1a1a1a;
+      z-index: 1;
+    }
+    .map-top-bar {
+      position: absolute; top: 0; left: 0; right: 0;
+      z-index: 500;
+      background: linear-gradient(180deg, rgba(18,18,18,0.95) 0%, rgba(18,18,18,0) 100%);
+      padding: 1rem 1rem 2rem;
+      pointer-events: none;
+    }
+    .map-top-bar h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem; color: var(--cream);
+      margin: 0 0 0.2rem; font-weight: 300;
+    }
+    .map-top-bar p {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.58rem; color: var(--text-dim);
+      letter-spacing: 0.1em; text-transform: uppercase; margin: 0;
+    }
+    .map-legend {
+      position: absolute; bottom: 12px; left: 12px;
+      background: rgba(18,18,18,0.92);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.65rem 0.9rem;
+      z-index: 500;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.58rem;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+      pointer-events: none;
+    }
+    .map-legend-item { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; }
+    .map-legend-item:last-child { margin-bottom: 0; }
+    .map-legend-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    /* Leaflet popup dark theme */
+    .leaflet-popup-content-wrapper {
+      background: #1e1e1e !important;
+      border: 1px solid #333 !important;
+      color: #e8e0d5 !important;
+      border-radius: 12px !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+    }
+    .leaflet-popup-tip { background: #1e1e1e !important; }
+    .leaflet-popup-close-button { color: #888 !important; font-size: 18px !important; }
+    .wine-popup h3 {
+      font-family: 'Cormorant Garamond', serif;
+      color: #E8C840; margin: 0 0 0.2rem;
+      font-size: 1.15rem; font-weight: 400;
+    }
+    .wine-popup .wp-pais {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.58rem; color: #888;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .wine-popup .wp-tipo {
+      display: inline-block;
+      font-family: 'DM Mono', monospace; font-size: 0.58rem;
+      padding: 0.15rem 0.6rem; border-radius: 20px;
+      margin-bottom: 0.6rem;
+    }
+    .wine-popup .wp-uvas {
+      font-size: 0.78rem; color: #c5b99a;
+      margin-bottom: 0.5rem; line-height: 1.4;
+    }
+    .wine-popup .wp-uvas strong { color: #e8e0d5; font-weight: 500; }
+    .wine-popup .wp-desc {
+      font-size: 0.78rem; color: #9a8a7a;
+      line-height: 1.55; border-top: 1px solid #2a2a2a;
+      padding-top: 0.5rem; margin-top: 0.5rem;
+    }
+    /* Marcadores custom */
+    .wine-marker {
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.25);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .wine-marker:hover { transform: scale(1.2); }
+  </style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-monogram">S</div>
+  <div class="splash-subtitle">El Sommelier RD</div>
+  <div class="splash-bar"></div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="logo">
+      <div class="logo-emblem">S</div>
+      <div class="logo-text">El Sommelier <span>RD</span></div>
+    </div>
+    <div class="header-status">
+      <div class="status-dot"></div>
+      <span>EN LINEA</span>
+    </div>
+  </header>
+
+  <nav>
+    <button class="nav-btn active" data-section="inicio">
+      <span class="nav-icon">🏠</span>Inicio
+    </button>
+    <button class="nav-btn" data-section="sommelier">
+      <span class="nav-icon">🎓</span>Sommelier
+    </button>
+    <button class="nav-btn" data-section="catalab">
+      <span class="nav-icon">📸</span>Escanea
+    </button>
+    <button class="nav-btn" data-section="maridaje">
+      <span class="nav-icon">🍽️</span>Maridaje
+    </button>
+    <button class="nav-btn" data-section="vinos">
+      <span class="nav-icon">🍷</span>Vinos
+    </button>
+    <button class="nav-btn" data-section="bodega">
+      <span class="nav-icon">📚</span>Bodega
+    </button>
+    <button class="nav-btn" data-section="mapa">
+      <span class="nav-icon">🗺️</span>Mapa
+    </button>
+    <button class="nav-btn" data-section="academia">
+      <span class="nav-icon">🎓</span>Academia
+    </button>
+    <button class="nav-btn" data-section="perfil">
+      <span class="nav-icon">👤</span>Perfil
+    </button>
+  </nav>
+
+  <main>
+
+    <!-- ─── INICIO ─── -->
+    <div class="section active" id="sec-inicio">
+      <div class="hero">
+        <div class="hero-greeting">Bienvenidos</div>
+        <h1 class="hero-title">El Sommelier RD<br/><em>Academy</em></h1>
+        <p class="hero-sub">El primer sommelier digital dominicano. Aprende, descubre y marida con la sabiduria de El Maestro.</p>
+      </div>
+
+      <div class="quick-grid">
+        <div class="quick-card" onclick="goSection('sommelier')">
+          <div class="icon">🎓</div>
+          <div class="label">Sommelier de Cabecera</div>
+          <div class="desc">Consulta con AI</div>
+        </div>
+        <div class="quick-card" onclick="goSection('catalab')">
+          <div class="icon">📸</div>
+          <div class="label">Escanea tu Vino</div>
+          <div class="desc">Escanea etiquetas</div>
+        </div>
+        <div class="quick-card" onclick="goSection('maridaje')">
+          <div class="icon">🍽️</div>
+          <div class="label">Maridaje</div>
+          <div class="desc">Cocina dominicana</div>
+        </div>
+        <div class="quick-card" onclick="goSection('vinos')">
+          <div class="icon">🍷</div>
+          <div class="label">Vinos</div>
+          <div class="desc">Explora miles</div>
+        </div>
+        <div class="quick-card" onclick="goSection('bodega')">
+          <div class="icon">🍾</div>
+          <div class="label">Bodega</div>
+          <div class="desc">Tu coleccion</div>
+        </div>
+        <div class="quick-card" onclick="goSection('academia')">
+          <div class="icon">📚</div>
+          <div class="label">Academia</div>
+          <div class="desc">15 lecciones</div>
+        </div>
+      </div>
+
+      <div class="divider"><span>Destacado</span></div>
+
+      <div class="card">
+        <div class="card-label">Leccion del dia</div>
+        <div class="card-title">Los aromas terciarios del vino</div>
+        <div class="card-body">Descubre como el tiempo en barrica y botella transforma un vino y crea complejidad unica. Nivel Bronce - 8 min</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Maridaje de la semana</div>
+        <div class="card-title">Mofongo al ajillo con Albarino</div>
+        <div class="card-body">La acidez vibrante del Albarino gallego abraza el ajo y la textura del platano como un mar que besa la costa caribena.</div>
+      </div>
+    </div>
+
+    <!-- ─── SOMMELIER / CHAT ─── -->
+    <div class="section" id="sec-sommelier">
+      <div class="chat-container">
+        <div class="chat-header">
+          <div class="maestro-avatar">M</div>
+          <div class="maestro-info">
+            <h3>El Sommelier de Cabecera</h3>
+            <p>Cerebro-Elsommelier-RD - Siempre disponible</p>
+          </div>
+        </div>
+
+        <div id="chat-messages">
+          <div class="msg maestro">
+            <div class="msg-label">El Maestro</div>
+            <div class="msg-bubble">Bienvenido a mi universo. Soy tu Sommelier de Cabecera — el primer sommelier digital dominicano. Puedes preguntarme sobre vinos, maridajes con nuestra gastronomia, tecnicas de cata, o cualquier duda del mundo vinicola. En que puedo servirte hoy?</div>
+          </div>
+        </div>
+
+        <div class="chat-input-area">
+          <textarea id="chat-input" class="chat-input" placeholder="Pregunta al Maestro..." rows="1"></textarea>
+          <button id="send-btn" class="send-btn" onclick="sendMessage()">&#10148;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── CATA LAB ─── -->
+    <div class="section" id="sec-catalab">
+      <div class="hero" style="padding: 1rem 0 1.5rem;">
+        <div class="hero-greeting">Cata Lab</div>
+        <h1 class="hero-title" style="font-size: 1.8rem;">Escanea <em>etiquetas</em><br/>con IA</h1>
+        <p class="hero-sub">Toma una foto de la etiqueta de cualquier vino y El Maestro te dara toda la informacion.</p>
+      </div>
+
+      <div class="cata-upload-zone" onclick="document.getElementById('cata-file').click()">
+        <div class="icon">📸</div>
+        <div class="title">Toca para escanear etiqueta</div>
+        <div class="subtitle">Sube una foto o usa tu camara</div>
+        <input type="file" id="cata-file" accept="image/*" capture="environment" onchange="handleCataUpload(event)" />
+      </div>
+
+      <div class="cata-preview" id="cata-preview">
+        <img id="cata-preview-img" src="" alt="Preview" />
+        <button class="btn-primary" onclick="analizarEtiqueta()">&#10070; Analizar con El Maestro</button>
+      </div>
+
+      <div id="cata-result"></div>
+    </div>
+
+    <!-- ─── MARIDAJE ─── -->
+    <div class="section" id="sec-maridaje">
+      <div class="hero" style="padding: 1rem 0 1.5rem;">
+        <div class="hero-greeting">Motor de maridaje</div>
+        <h1 class="hero-title" style="font-size: 1.8rem;">Cocina <em>dominicana</em><br/>+ vino mundial</h1>
+      </div>
+
+      <div class="maridaje-input-group">
+        <label>Platos tradicionales</label>
+        <div class="platos-grid" id="platos-grid">
+          <button class="plato-chip" onclick="selectPlato(this)">Mofongo</button>
+          <button class="plato-chip" onclick="selectPlato(this)">Sancocho</button>
+          <button class="plato-chip" onclick="selectPlato(this)">Chivo guisado</button>
+          <button class="plato-chip" onclick="selectPlato(this)">Pastelon</button>
+          <button class="plato-chip" onclick="selectPlato(this)">Mangu</button>
+          <button class="plato-chip" onclick="selectPlato(this)">Pollo guisado</button>
+          <button class="plato-chip" onclick="selectPlato(this)">Pescado al coco</button>
+          <button class="plato-chip" onclick="selectPlato(this)">Chicharron</button>
+          <button class="plato-chip" onclick="selectPlato(this)">La Bandera</button>
+          <button class="plato-chip" onclick="selectPlato(this)">Locrio de pollo</button>
+          <button class="plato-chip" onclick="selectPlato(this)">Asopao</button>
+          <button class="plato-chip" onclick="selectPlato(this)">Yaroa</button>
+        </div>
+      </div>
+
+      <div class="maridaje-input-group">
+        <label>O escribe tu plato</label>
+        <input type="text" id="plato-input" placeholder="Ej: Pernil de cerdo asado..." />
+      </div>
+
+      <div class="maridaje-input-group">
+        <label>Presupuesto</label>
+        <select id="presupuesto-select">
+          <option value="cualquiera">Sin limite</option>
+          <option value="menos de $20 USD">Hasta $20 USD</option>
+          <option value="$20 a $50 USD">$20 - $50 USD</option>
+          <option value="$50 a $100 USD">$50 - $100 USD</option>
+          <option value="mas de $100 USD">Mas de $100 USD</option>
+        </select>
+      </div>
+
+      <button class="btn-primary" id="maridaje-btn" onclick="buscarMaridaje()">
+        &#10070; Descubrir Maridaje
+      </button>
+
+      <div id="maridaje-result" class="maridaje-result" style="display:none;"></div>
+    </div>
+
+    <!-- ─── VINOS ─── -->
+    <div class="section" id="sec-vinos">
+      <div class="hero" style="padding: 1rem 0 1rem;">
+        <div class="hero-greeting">Catalogo</div>
+        <h1 class="hero-title" style="font-size: 1.8rem;">Explora <em>vinos</em></h1>
+      </div>
+
+      <div class="search-bar">
+        <input type="text" id="vino-search" class="search-input" placeholder="Buscar vino, varietal, region..." />
+        <button class="search-btn" onclick="buscarVinos()">&#8981;</button>
+      </div>
+
+      <div class="filter-pills">
+        <button class="filter-pill active" onclick="filterVinos(this, 'todos')">Todos</button>
+        <button class="filter-pill" onclick="filterVinos(this, 'tinto')"><span class="dot" style="background:#722F37"></span>Tintos</button>
+        <button class="filter-pill" onclick="filterVinos(this, 'blanco')"><span class="dot" style="background:#E8D5A3"></span>Blancos</button>
+        <button class="filter-pill" onclick="filterVinos(this, 'espumoso')"><span class="dot" style="background:#F5EFE0"></span>Espumosos</button>
+        <button class="filter-pill" onclick="filterVinos(this, 'rosado')"><span class="dot" style="background:#FFB7C5"></span>Rosados</button>
+      </div>
+
+      <div id="vinos-list">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <span>Cargando bodega...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── BODEGA ─── -->
+    <div class="section" id="sec-bodega">
+      <div class="hero" style="padding: 1rem 0 1.5rem;">
+        <div class="hero-greeting">Mi Bodega Personal</div>
+        <h1 class="hero-title" style="font-size: 1.8rem;">Tu <em>coleccion</em></h1>
+      </div>
+
+      <div class="bodega-stats">
+        <div class="bodega-stat">
+          <div class="value" id="bodega-total">0</div>
+          <div class="label">Botellas</div>
+        </div>
+        <div class="bodega-stat">
+          <div class="value" id="bodega-tipos">0</div>
+          <div class="label">Varietales</div>
+        </div>
+        <div class="bodega-stat">
+          <div class="value" id="bodega-paises">0</div>
+          <div class="label">Paises</div>
+        </div>
+      </div>
+
+      <div id="bodega-list">
+        <div class="bodega-empty">
+          <div class="icon">🍾</div>
+          <div class="title">Tu bodega esta vacia</div>
+          <div class="subtitle">Escanea vinos con Cata Lab o agrega desde el catalogo para comenzar tu coleccion personal.</div>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="goSection('catalab')" style="margin-top:1rem;">&#10070; Escanear primer vino</button>
+    </div>
+
+    <!-- ─── ACADEMIA ─── -->
+    <div class="section" id="sec-academia">
+      <div class="hero" style="padding: 1rem 0 1.5rem;">
+        <div class="hero-greeting">Academia El Sommelier RD</div>
+        <h1 class="hero-title" style="font-size: 1.8rem;">Tu camino al <em>vino</em></h1>
+      </div>
+
+      <div class="nivel-badge bronce">&#129353; Nivel Bronce - Activo</div>
+
+      <div class="xp-bar-container">
+        <div class="xp-bar-label">
+          <span>Progreso</span>
+          <span id="xp-text">0 / 1000 XP</span>
+        </div>
+        <div class="xp-bar"><div class="xp-fill" id="xp-fill"></div></div>
+      </div>
+
+      <div class="divider"><span>Modulo 1 — Fundamentos</span></div>
+
+      <div id="lecciones-list">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <span>Cargando lecciones...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PERFIL ─── -->
+    <div class="section" id="sec-perfil">
+      <div class="perfil-hero">
+        <div class="perfil-avatar">S</div>
+        <div class="perfil-nombre">Estudiante</div>
+        <div class="perfil-nivel">Nivel Bronce - Iniciado</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Lecciones</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">0</div>
+          <div class="stat-label">XP</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Racha dias</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Plan actual</div>
+        <div class="card-title">Bronce — Gratuito</div>
+        <div class="card-body">15 lecciones - Quiz interactivos - Acceso a El Maestro AI</div>
+      </div>
+
+      <div class="card" style="border-color: rgba(184,134,11,0.35);">
+        <div class="card-label" style="color: var(--gold);">Actualizar a Plata</div>
+        <div class="card-title">$9.99 / mes</div>
+        <div class="card-body">18 lecciones avanzadas - Cata Lab SAT - Bodega personal - Sin limites con El Maestro</div>
+      </div>
+
+      <div class="card" style="border-color: rgba(184,134,11,0.55);">
+        <div class="card-label" style="color: var(--gold-light);">Actualizar a Oro</div>
+        <div class="card-title">$29.99 / mes</div>
+        <div class="card-body">12 lecciones master - Certificacion SAT - Spider Graph avanzado - Maridaje personalizado - Soporte prioritario</div>
+      </div>
+    </div>
+
+    <!-- ─── MAPA DE REGIONES VINÍCOLAS ─── -->
+    <div class="section" id="sec-mapa">
+      <div class="map-top-bar">
+        <h2>Regiones Vinícolas del Mundo</h2>
+        <p>Toca cualquier punto para explorar la región</p>
+      </div>
+      <div id="wine-map"></div>
+      <div class="map-legend">
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#B22222"></div>Tinto</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#2E8B57"></div>Blanco</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#E8C840"></div>Espumoso</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#E87040"></div>Mixto</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#8B008B"></div>Fortificado</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- VISOR DE LECCIÓN -->
+<div class="leccion-overlay" id="leccion-overlay">
+  <div class="leccion-header">
+    <button class="leccion-back-btn" onclick="cerrarLeccion()" aria-label="Volver">&#8592;</button>
+    <div class="leccion-header-info">
+      <div class="leccion-header-titulo" id="leccion-overlay-titulo">Cargando...</div>
+      <div class="leccion-header-meta" id="leccion-overlay-meta"></div>
+    </div>
+  </div>
+  <div class="leccion-body" id="leccion-overlay-body">
+    <div class="leccion-loading">
+      <div class="spinner"></div>
+      <span>Cargando lección...</span>
+    </div>
+  </div>
+</div>
+
+<!-- VISOR DE VINO -->
+<div class="vino-overlay" id="vino-overlay">
+  <div class="vino-overlay-header">
+    <button class="leccion-back-btn" onclick="cerrarVino()" aria-label="Volver">&#8592;</button>
+    <div class="leccion-header-info">
+      <div class="leccion-header-titulo" id="vino-overlay-titulo">Cargando...</div>
+      <div class="leccion-header-meta" id="vino-overlay-meta"></div>
+    </div>
+  </div>
+  <div class="vino-overlay-body" id="vino-overlay-body">
+    <div class="leccion-loading">
+      <div class="spinner"></div>
+      <span>Cargando vino...</span>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─── CONFIG ───
+  const API_BASE = 'https://elsommelier-backend.vercel.app';
+
+  // ─── STATE ───
+  let chatHistory = [];
+  let isTyping = false;
+  let allVinos = [];
+  let cataImageData = null;
+
+  // ─── SPLASH ───
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      document.getElementById('splash').classList.add('hidden');
+      document.getElementById('app').classList.add('visible');
+      loadVinos();
+      loadLecciones();
+      loadBodega();
+      animateXP(320, 1000);
+    }, 2000);
+  });
+
+  // ─── NAVEGACION ───
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => goSection(btn.dataset.section));
+  });
+
+  function goSection(id) {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const navBtn = document.querySelector(`[data-section="${id}"]`);
+    if (navBtn) navBtn.classList.add('active');
+    document.getElementById(`sec-${id}`).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ─── CHAT ───
+  const chatInput = document.getElementById('chat-input');
+  chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+  chatInput.addEventListener('input', () => {
+    chatInput.style.height = 'auto';
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+  });
+
+  async function sendMessage() {
+    const msg = chatInput.value.trim();
+    if (!msg || isTyping) return;
+
+    addMsg('user', msg);
+    chatInput.value = '';
+    chatInput.style.height = 'auto';
+    chatHistory.push({ role: 'user', content: msg });
+
+    const typing = addTyping();
+    isTyping = true;
+    document.getElementById('send-btn').disabled = true;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/sommelier`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mensaje: msg, historial: chatHistory.slice(-10) })
+      });
+      const data = await res.json();
+      typing.remove();
+      const reply = data.respuesta || data.error || 'El Maestro no pudo responder en este momento.';
+      addMsg('maestro', reply);
+      chatHistory.push({ role: 'assistant', content: reply });
+    } catch {
+      typing.remove();
+      addMsg('maestro', 'Hay una interrupcion en la conexion con El Maestro. Verifica el backend y vuelve a intentar.');
+    }
+
+    isTyping = false;
+    document.getElementById('send-btn').disabled = false;
+  }
+
+  function addMsg(role, text) {
+    const container = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = `msg ${role}`;
+    div.innerHTML = `
+      <div class="msg-label">${role === 'user' ? 'Tu' : 'El Maestro'}</div>
+      <div class="msg-bubble">${text.replace(/\n/g, '<br>')}</div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    return div;
+  }
+
+  function addTyping() {
+    const container = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'msg maestro';
+    div.innerHTML = `
+      <div class="msg-label">El Maestro</div>
+      <div class="typing-indicator">
+        <span></span><span></span><span></span>
+      </div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    return div;
+  }
+
+  // ─── CATA LAB ───
+  function handleCataUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      cataImageData = e.target.result;
+      document.getElementById('cata-preview-img').src = cataImageData;
+      document.getElementById('cata-preview').style.display = 'block';
+      document.getElementById('cata-result').innerHTML = '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function analizarEtiqueta() {
+    if (!cataImageData) { showToast('Sube una imagen primero'); return; }
+
+    const result = document.getElementById('cata-result');
+    result.innerHTML = `
+      <div class="leccion-loading">
+        <div class="spinner"></div>
+        <span>El Maestro analiza la etiqueta...</span>
+      </div>`;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/scanner/analizar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imagen: cataImageData })
+      });
+      const data = await res.json();
+
+      if (!data.success || !data.datos) {
+        result.innerHTML = `
+          <div class="card" style="border-left:3px solid #c0392b">
+            <div class="card-label" style="color:#e07070">Error del Maestro</div>
+            <div class="card-body">${data.error || 'No se pudo analizar la etiqueta. Intenta con una foto mas clara y bien iluminada.'}</div>
+          </div>`;
+        return;
+      }
+
+      const d = data.datos;
+      const chips = [d.tipo, d.pais, d.region, d.denominacion_origen, d.cosecha ? `Cosecha ${d.cosecha}` : null, d.graduacion_alcoholica]
+        .filter(Boolean)
+        .map(c => `<span class="vino-detail-chip">${c}</span>`).join('');
+
+      const uvas = Array.isArray(d.uvas) && d.uvas.length
+        ? `<div class="vino-seccion-titulo">Uvas</div>
+           <div style="margin-bottom:0.5rem">${d.uvas.map(u => `<span class="vino-maridaje-tag">${u}</span>`).join('')}</div>`
+        : '';
+
+      const notaCata = d.nota_cata
+        ? `<div class="vino-seccion-titulo">Nota de Cata</div>
+           <div class="vino-nota-cata">${d.nota_cata}</div>`
+        : '';
+
+      const maridaje = d.maridaje
+        ? `<div class="vino-seccion-titulo">Maridaje recomendado</div>
+           <div class="vino-nota-cata">${d.maridaje}</div>`
+        : '';
+
+      const precio = d.precio_estimado_usd
+        ? `<div class="vino-seccion-titulo">Precio estimado</div>
+           <div class="vino-nota-cata" style="font-size:1.1rem">${d.precio_estimado_usd}</div>`
+        : '';
+
+      const confianza = d.confianza
+        ? `<div style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--text-dim);margin-top:1rem;text-align:right">
+             Confianza: ${Math.round(d.confianza * 100)}%
+           </div>`
+        : '';
+
+      result.innerHTML = `
+        <div style="border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:var(--radius);overflow:hidden;margin-top:0.5rem">
+          <div style="background:var(--bg-card);padding:1.2rem">
+            <div style="font-family:'DM Mono',monospace;font-size:0.55rem;letter-spacing:0.14em;color:var(--gold);text-transform:uppercase;margin-bottom:0.5rem">✦ Análisis del Maestro</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--cream);line-height:1.2;margin-bottom:0.2rem">${d.nombre || 'Vino sin identificar'}</div>
+            <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1rem">${d.bodega || ''}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:1rem">${chips}</div>
+            ${uvas}
+            ${d.descripcion ? `<div class="vino-seccion-titulo">Descripción</div><div class="vino-nota-cata">${d.descripcion}</div>` : ''}
+            ${notaCata}
+            ${maridaje}
+            ${precio}
+            ${confianza}
+          </div>
+          <div style="padding:1rem;border-top:1px solid var(--border)">
+            <button class="vino-bodega-btn" onclick="addToBodega('${(d.nombre||'').replace(/'/g,"\\'")}')">
+              + Agregar a mi bodega
+            </button>
+          </div>
+        </div>`;
+
+    } catch(e) {
+      result.innerHTML = `
+        <div class="card">
+          <div class="card-body" style="color:var(--text-dim)">
+            Error de conexion con Cata Lab. Verifica tu red e intenta de nuevo.
+          </div>
+        </div>`;
+    }
+  }
+
+  // ─── MARIDAJE ───
+  let platoSeleccionado = '';
+
+  function selectPlato(el) {
+    document.querySelectorAll('.plato-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    platoSeleccionado = el.textContent;
+    document.getElementById('plato-input').value = '';
+  }
+
+  async function buscarMaridaje() {
+    const plato = document.getElementById('plato-input').value.trim() || platoSeleccionado;
+    if (!plato) { showToast('Selecciona o escribe un plato'); return; }
+    const presupuesto = document.getElementById('presupuesto-select').value;
+    const btn = document.getElementById('maridaje-btn');
+    const result = document.getElementById('maridaje-result');
+
+    btn.disabled = true;
+    btn.textContent = '✦ Consultando al Maestro...';
+    result.style.display = 'block';
+    result.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><span>El Maestro esta eligiendo...</span></div>';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/maridaje/vinos-para/${encodeURIComponent(plato)}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      renderMaridaje(data, plato);
+    } catch {
+      result.innerHTML = '<div class="card-body" style="color:var(--text-dim)">No se pudo conectar con el motor de maridaje. Verifica la conexion.</div>';
+    }
+
+    btn.disabled = false;
+    btn.textContent = '✦ Descubrir Maridaje';
+  }
+
+  function renderMaridaje(data, plato) {
+    const result = document.getElementById('maridaje-result');
+    if (data.respuesta_libre) {
+        result.innerHTML = `<div class="card"><div class="card-label">El Sommelier dice</div><div class="card-body">${data.respuesta_libre}</div></div>`;
+        return;
+    }
+
+    const vinos = data.maridajes || data.vinos || data.recomendaciones || [];
+
+    if (vinos.length === 0) {
+        result.innerHTML = `<div class="card"><div class="card-body" style="color:var(--text-dim)">No se encontraron maridajes para ${plato}</div></div>`;
+        return;
+    }
+    let html = `<div class="card-label" style="margin-bottom:0.5rem">Maridajes para ${plato}</div>`;
+    vinos.forEach(v => {
+      const nombre = v.vino || v.nombre || '';
+      const region = v.region || '';
+      const varietal = v.varietal || v.tipo || '';
+      const razon = v.razon || v.explicacion || v.descripcion || '';
+      const poetica = v.nota_poetica || '';
+      html += `
+        <div class="maridaje-vino-card">
+          <div class="maridaje-vino-name">${nombre}</div>
+          <div class="maridaje-vino-region">${varietal} - ${region}</div>
+          ${razon ? `<div class="maridaje-vino-razon">${razon}</div>` : ''}
+          ${poetica ? `<div class="maridaje-vino-poetica">${poetica}</div>` : ''}
+        </div>
+      `;
+    });
+    if (data.consejo_maestro || data.consejo) {
+      html += `<div class="consejo-maestro"><div class="label">&#10070; Consejo del Sommelier</div><p>${data.consejo_maestro || data.consejo}</p></div>`;
+    }
+    result.innerHTML = html;
+  }
+
+  // ─── VINOS ───
+  async function loadVinos() {
+    try {
+      const res = await fetch(`${API_BASE}/api/vinos/recomendados`);
+      const data = await res.json();
+      allVinos = data.vinos || [];
+      renderVinos(allVinos);
+    } catch {
+      document.getElementById('vinos-list').innerHTML = '<div class="card-body" style="color:var(--text-dim);padding:1rem">Sin conexion al catalogo. Verifica el backend.</div>';
+    }
+  }
+
+  async function buscarVinos() {
+    const q = document.getElementById('vino-search').value.trim();
+    if (!q) { renderVinos(allVinos); return; }
+    const url = `${API_BASE}/api/vinos/buscar/${encodeURIComponent(q)}`;
+    const list = document.getElementById('vinos-list');
+    list.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><span>Buscando...</span></div>';
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      renderVinos(data.vinos || []);
+    } catch {
+      list.innerHTML = '<div class="card-body" style="color:var(--text-dim);padding:1rem">Error en la busqueda.</div>';
+    }
+  }
+
+  function filterVinos(el, tipo) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    if (tipo === 'todos') {
+      renderVinos(allVinos);
+    } else {
+      const tipoMap = { 'tinto': 'tintos', 'blanco': 'blancos', 'espumoso': 'espumoso', 'rosado': 'rosados' };
+      const apiTipo = tipoMap[tipo] || tipo;
+      fetch(`${API_BASE}/api/vinos/tipo/${apiTipo}`)
+        .then(r => r.json())
+        .then(data => renderVinos(data.vinos || []))
+        .catch(() => renderVinos([]));
+    }
+  }
+
+  const COLORES_VINO = {
+    'tintos': '#722F37', 'tinto': '#722F37', 'reds': '#722F37',
+    'blancos': '#E8D5A3', 'blanco': '#E8D5A3', 'whites': '#E8D5A3',
+    'rosados': '#FFB7C5', 'rosado': '#FFB7C5',
+    'espumoso': '#F5EFE0', 'espumosos': '#F5EFE0',
+    'naranja': '#E8882A', 'dulce': '#C8860B'
+  };
+
+  function renderVinos(vinos) {
+    vinosActuales = vinos;
+    const list = document.getElementById('vinos-list');
+    if (!vinos.length) {
+      list.innerHTML = '<div class="card-body" style="color:var(--text-dim);padding:1rem">No se encontraron vinos.</div>';
+      return;
+    }
+    list.innerHTML = vinos.map((v, idx) => {
+      const tipo = (v.tipo || 'tintos').toLowerCase();
+      const color = COLORES_VINO[tipo] || '#722F37';
+      const rating = v.rating ? `${v.rating.promedio} ★` : '';
+      const imgHtml = v.imagen ? `<img src="${v.imagen}" alt="${v.nombre}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid var(--border);" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+          <div class="vino-color-dot" style="background:${color};display:none"></div>` : `<div class="vino-color-dot" style="background:${color}"></div>`;
+      return `
+        <div class="vino-item" onclick="abrirVino(${idx})">
+          ${imgHtml}
+          <div class="vino-info">
+            <div class="vino-nombre">${v.nombre}</div>
+            <div class="vino-meta">${v.bodega || ''} - ${v.region || 'Sin region'}</div>
+          </div>
+          ${rating ? `<div class="vino-precio">${rating}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ─── VISOR DE VINO ───
+  let vinosActuales = [];
+
+  // Badge SVG de El Sommelier RD — medallón burgundy/dorado con puntuación dinámica
+  // Badge usando el icono oficial de El Sommelier RD — sólo el número cambia
+  function rdBadgeSVG(pts) {
+    const fs = pts >= 100 ? '2.5rem' : '3rem';
+    return `
+      <div class="rd-badge-wrap">
+        <img class="rd-badge-img" src="./assets/badge-rd.jpg" alt="El Sommelier RD"/>
+        <div class="rd-badge-num" style="font-size:${fs}">${pts}</div>
+      </div>`;
+  }
+
+  // Calcula puntuación RD automáticamente si no hay valor manual
+  function calcularPuntuacionRD(puntuacion) {
+    if (!puntuacion) return null;
+    // Siempre 1 punto por debajo del oficial — máximo 100
+    return Math.min(100, Math.max(80, puntuacion - 1));
+  }
+
+  function abrirVino(idx) {
+    const v = vinosActuales[idx];
+    if (!v) return;
+
+    const overlay = document.getElementById('vino-overlay');
+    document.getElementById('vino-overlay-titulo').textContent = v.nombre || 'Vino';
+    document.getElementById('vino-overlay-meta').textContent = [v.bodega, v.pais].filter(Boolean).join(' · ');
+
+    const tipo = (v.tipo || '').toLowerCase();
+    const color = COLORES_VINO[tipo] || '#722F37';
+    const puntuacion = v.rating?.promedio;
+    const fuente = v.rating?.fuente;
+    const puntuacionRD = Math.min(100, v.puntuacion_rd || calcularPuntuacionRD(puntuacion) || 0) || null;
+
+    const chips = [
+      v.tipo ? v.tipo.charAt(0).toUpperCase() + v.tipo.slice(1) : null,
+      v.pais,
+      v.region,
+      v.denominacion_origen,
+      v.varietal
+    ].filter(Boolean);
+
+    const bodegaLocal = JSON.parse(localStorage.getItem('mi_bodega') || '[]');
+    const yaEsta = bodegaLocal.includes(v.nombre);
+    const maridajesArr = Array.isArray(v.maridajes) ? v.maridajes : (v.maridajes ? [v.maridajes] : []);
+
+    document.getElementById('vino-overlay-body').innerHTML = `
+      <div class="vino-hero" style="background:linear-gradient(135deg,#1a0a00,#2a1000)">
+        ${v.imagen ? `<img class="vino-hero-img" src="${v.imagen}" alt="${v.nombre}" onerror="this.style.display='none'"/>` : `<div style="width:80px;height:80px;border-radius:50%;background:${color};opacity:0.5"></div>`}
+        ${v.tipo ? `<div class="vino-hero-badge">${v.tipo}</div>` : ''}
+      </div>
+      <div class="vino-overlay-content">
+        <div class="vino-overlay-nombre">${v.nombre}</div>
+        <div class="vino-overlay-bodega">${v.bodega || ''}</div>
+        <div class="vino-detail-row">
+          ${chips.map(c => `<span class="vino-detail-chip">${c}</span>`).join('')}
+        </div>
+
+        ${(puntuacionRD || puntuacion) ? `
+          <div class="vino-seccion-titulo">Puntuaciones</div>
+          <div class="puntuaciones-grid">
+            ${puntuacionRD ? `
+              <div class="puntuacion-rd-wrap">
+                ${rdBadgeSVG(puntuacionRD)}
+                <div class="puntuacion-rd-label">Puntuación Oficial</div>
+              </div>
+            ` : ''}
+            ${puntuacion ? `
+              <div class="puntuacion-ext-wrap">
+                <div class="puntuacion-ext-num">${puntuacion}</div>
+                <div class="puntuacion-ext-fuente">${fuente || 'Puntuación Internacional'}</div>
+                <div class="puntuacion-ext-pts">/ 100 pts</div>
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
+
+        ${v.descripcion ? `
+          <div class="vino-seccion-titulo">Descripción</div>
+          <div class="vino-nota-cata">${v.descripcion}</div>
+        ` : ''}
+
+        ${v.notas_cata ? `
+          <div class="vino-seccion-titulo">Nota de Cata</div>
+          <div class="vino-nota-cata">${v.notas_cata}</div>
+        ` : ''}
+
+        ${maridajesArr.length ? `
+          <div class="vino-seccion-titulo">Maridajes</div>
+          <div>${maridajesArr.map(m => `<span class="vino-maridaje-tag">${m}</span>`).join('')}</div>
+        ` : ''}
+
+        ${v.precio_rango ? `
+          <div class="vino-seccion-titulo">Precio estimado</div>
+          <div class="vino-nota-cata" style="font-size:1.1rem">${v.precio_rango}</div>
+        ` : ''}
+
+        <button class="vino-bodega-btn ${yaEsta ? 'ya-agregado' : ''}" id="vino-bodega-btn" onclick="toggleBodegaDesdeVino('${(v.nombre || '').replace(/'/g, "\\'")}')">
+          ${yaEsta ? '✓ En tu bodega' : '+ Agregar a mi bodega'}
+        </button>
+      </div>
+    `;
+
+    document.getElementById('vino-overlay-body').scrollTop = 0;
+    overlay.classList.add('open');
+    history.pushState({ vinoOverlay: true }, '');
+  }
+
+  function cerrarVino() {
+    document.getElementById('vino-overlay').classList.remove('open');
+  }
+
+  function toggleBodegaDesdeVino(nombre) {
+    let bodega = JSON.parse(localStorage.getItem('mi_bodega') || '[]');
+    const yaEsta = bodega.includes(nombre);
+    if (yaEsta) {
+      bodega = bodega.filter(v => v !== nombre);
+      localStorage.setItem('mi_bodega', JSON.stringify(bodega));
+      updateBodegaUI(bodega);
+      showToast('Removido de tu bodega');
+    } else {
+      bodega.push(nombre);
+      localStorage.setItem('mi_bodega', JSON.stringify(bodega));
+      updateBodegaUI(bodega);
+      showToast('Agregado a tu bodega');
+    }
+    const btn = document.getElementById('vino-bodega-btn');
+    if (btn) {
+      btn.textContent = yaEsta ? '+ Agregar a mi bodega' : '✓ En tu bodega';
+      btn.className = `vino-bodega-btn ${yaEsta ? '' : 'ya-agregado'}`;
+    }
+  }
+
+  // ─── BODEGA ───
+  function loadBodega() {
+    const bodega = JSON.parse(localStorage.getItem('mi_bodega') || '[]');
+    updateBodegaUI(bodega);
+  }
+
+  function addToBodega(nombre) {
+    let bodega = JSON.parse(localStorage.getItem('mi_bodega') || '[]');
+    if (bodega.includes(nombre)) {
+      showToast('Ya esta en tu bodega');
+      return;
+    }
+    bodega.push(nombre);
+    localStorage.setItem('mi_bodega', JSON.stringify(bodega));
+    updateBodegaUI(bodega);
+    showToast('Agregado a tu bodega');
+  }
+
+  function removeFromBodega(nombre) {
+    let bodega = JSON.parse(localStorage.getItem('mi_bodega') || '[]');
+    bodega = bodega.filter(v => v !== nombre);
+    localStorage.setItem('mi_bodega', JSON.stringify(bodega));
+    updateBodegaUI(bodega);
+    showToast('Removido de tu bodega');
+  }
+
+  function updateBodegaUI(bodega) {
+    document.getElementById('bodega-total').textContent = bodega.length;
+
+    const matching = allVinos.filter(v => bodega.includes(v.nombre));
+    const varietales = new Set(matching.map(v => v.varietal).filter(Boolean));
+    const paises = new Set(matching.map(v => v.region).filter(Boolean));
+
+    document.getElementById('bodega-tipos').textContent = varietales.size;
+    document.getElementById('bodega-paises').textContent = paises.size;
+
+    const list = document.getElementById('bodega-list');
+    if (bodega.length === 0) {
+      list.innerHTML = `
+        <div class="bodega-empty">
+          <div class="icon">🍾</div>
+          <div class="title">Tu bodega esta vacia</div>
+          <div class="subtitle">Escanea vinos con Cata Lab o agrega desde el catalogo para comenzar tu coleccion personal.</div>
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = bodega.map(nombre => {
+      const vino = allVinos.find(v => v.nombre === nombre);
+      const tipo = vino ? (vino.tipo || 'tinto').toLowerCase() : 'tinto';
+      const color = COLORES_VINO[tipo] || '#722F37';
+      return `
+        <div class="vino-item">
+          <div class="vino-color-dot" style="background:${color}"></div>
+          <div class="vino-info">
+            <div class="vino-nombre">${nombre}</div>
+            ${vino ? `<div class="vino-meta">${vino.varietal || 'Blend'} - ${vino.region || ''}</div>` : ''}
+          </div>
+          <button onclick="removeFromBodega('${nombre.replace(/'/g, "\\'")}')" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1.1rem;" title="Remover">&#10005;</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ─── ACADEMIA ───
+  async function loadLecciones() {
+    const lista = document.getElementById('lecciones-list');
+    lista.innerHTML = '<div class="card-body" style="color:var(--text-dim);text-align:center;padding:2rem">Cargando lecciones...</div>';
+    try {
+      const res = await fetch(`${API_BASE}/api/academia/lecciones`);
+      const data = await res.json();
+      if (!data.success || !data.lecciones?.length) throw new Error('Sin lecciones');
+      renderLecciones(data.lecciones);
+    } catch {
+      lista.innerHTML = '<div class="card-body" style="color:var(--text-dim);text-align:center;padding:2rem">Error cargando lecciones. Verifica tu conexión.</div>';
+    }
+  }
+
+  function renderLecciones(lecciones) {
+    const nivelLabel = {
+      bronce:    '🥉 MÓDULO BRONCE — FUNDAMENTOS',
+      plata:     '🥈 MÓDULO PLATA — INTERMEDIO',
+      oro:       '🥇 MÓDULO ORO — AVANZADO',
+      diplomado: '🎓 DIPLOMADO SOMMELIER PROFESIONAL'
+    };
+    const nivelOrden = { bronce: 1, plata: 2, oro: 3, diplomado: 4 };
+    lecciones.sort((a, b) => {
+      const no = (nivelOrden[a.nivel] || 9) - (nivelOrden[b.nivel] || 9);
+      if (no !== 0) return no;
+      return (a.orden || 0) - (b.orden || 0);
+    });
+    let html = '';
+    let nivelActual = null;
+    lecciones.forEach((l, i) => {
+      if (l.nivel !== nivelActual) {
+        nivelActual = l.nivel;
+        const isDiplomado = l.nivel === 'diplomado';
+        html += `<div class="modulo-header${isDiplomado ? ' modulo-header-diplomado' : ''}">${nivelLabel[l.nivel] || l.nivel.toUpperCase()}</div>`;
+      }
+      const num = String(l.orden || i + 1).padStart(2, '0');
+      const dur = l.duracion_estimada ? `${l.duracion_estimada} min` : '';
+      const slugSafe = (l.slug || '').replace(/'/g, "\\'");
+      const diploClass = l.nivel === 'diplomado' ? ' diplomado-card' : '';
+      html += `
+        <div class="leccion-card${diploClass}" onclick="abrirLeccion('${slugSafe}', '${l.titulo.replace(/'/g, "\\'")}', '${dur}')">
+          <div class="leccion-num">${num}</div>
+          <div>
+            <div class="leccion-titulo">${l.titulo}</div>
+            <div class="leccion-dur">${dur}</div>
+          </div>
+          <div class="leccion-arrow">&#8250;</div>
+        </div>`;
+    });
+    document.getElementById('lecciones-list').innerHTML = html;
+  }
+
+  // ─── MARKDOWN BÁSICO ───
+  function mdToHtml(md) {
+    return md
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/^### (.+)$/gm, '<h3 style="font-family:\'Cormorant Garamond\',serif;font-size:1.1rem;color:var(--cream);margin:1.4rem 0 0.5rem">$1</h3>')
+      .replace(/^## (.+)$/gm,  '<h2 style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;color:var(--cream);margin:1.8rem 0 0.6rem;border-bottom:1px solid var(--border);padding-bottom:0.4rem">$1</h2>')
+      .replace(/^# (.+)$/gm,   '<h1 style="font-family:\'Cormorant Garamond\',serif;font-size:1.5rem;color:var(--cream);margin:0 0 1rem">$1</h1>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--cream)">$1</strong>')
+      .replace(/\*(.+?)\*/g,     '<em style="color:var(--gold-light)">$1</em>')
+      .replace(/^- (.+)$/gm,    '<div class="leccion-objetivo">$1</div>')
+      .replace(/\n\n/g, '<br><br>')
+      .replace(/\n/g, '\n');
+  }
+
+  // ─── VISOR DE LECCIÓN ───
+  async function abrirLeccion(slug, titulo, dur) {
+    const overlay = document.getElementById('leccion-overlay');
+    document.getElementById('leccion-overlay-titulo').textContent = titulo;
+    document.getElementById('leccion-overlay-meta').textContent = dur ? `${dur} de lectura` : '';
+    document.getElementById('leccion-overlay-body').innerHTML = `
+      <div class="leccion-loading"><div class="spinner"></div><span>Cargando lección...</span></div>`;
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/academia/lecciones/${slug}`);
+      const data = await res.json();
+      if (!data.success) throw new Error('No encontrada');
+      renderLeccionDetalle(data.leccion);
+    } catch {
+      document.getElementById('leccion-overlay-body').innerHTML = `
+        <div class="leccion-loading" style="color:var(--text-dim)">No se pudo cargar esta lección. Intenta de nuevo.</div>`;
+    }
+  }
+
+  function renderLeccionDetalle(l) {
+    let html = '';
+
+    if (l.imagen_url) {
+      html += `<img src="${l.imagen_url}" alt="${l.titulo}" class="leccion-imagen" onerror="this.style.display='none'">`;
+    }
+
+    if (l.objetivos?.length) {
+      html += `<div class="leccion-seccion-titulo">Objetivos de aprendizaje</div>`;
+      l.objetivos.forEach(o => { html += `<div class="leccion-objetivo">${o}</div>`; });
+    }
+
+    if (l.contenido_teorico) {
+      html += `<div class="leccion-seccion-titulo">Contenido</div>`;
+      html += `<div class="leccion-contenido">${mdToHtml(l.contenido_teorico)}</div>`;
+    }
+
+    if (l.ejemplos_practicos) {
+      const ej = typeof l.ejemplos_practicos === 'string' ? JSON.parse(l.ejemplos_practicos) : l.ejemplos_practicos;
+      if (Array.isArray(ej) && ej.length) {
+        html += `<div class="leccion-seccion-titulo">Ejemplos prácticos</div>`;
+        ej.forEach(e => {
+          html += `<div class="quiz-pregunta"><div class="quiz-pregunta-texto">${e.titulo || e.descripcion || JSON.stringify(e)}</div>`;
+          if (e.detalle) html += `<div class="leccion-contenido" style="font-size:0.9rem">${e.detalle}</div>`;
+          html += `</div>`;
+        });
+      }
+    }
+
+    if (l.quiz) {
+      const quiz = typeof l.quiz === 'string' ? JSON.parse(l.quiz) : l.quiz;
+      const preguntas = Array.isArray(quiz) ? quiz : quiz.preguntas || [];
+      if (preguntas.length) {
+        html += `<div class="leccion-seccion-titulo">Quiz de repaso</div><div class="quiz-container">`;
+        preguntas.forEach((p, pi) => {
+          html += `<div class="quiz-pregunta">
+            <div class="quiz-pregunta-texto">${pi + 1}. ${p.pregunta}</div>`;
+          (p.opciones || []).forEach((op, oi) => {
+            html += `<button class="quiz-opcion" onclick="responderQuiz(this, ${oi === (p.correcta ?? p.respuesta_correcta)}, '${(p.explicacion || '').replace(/'/g,"\\'")}')">
+              ${String.fromCharCode(65 + oi)}) ${op}
+            </button>`;
+          });
+          html += `</div>`;
+        });
+        html += `</div>`;
+      }
+    }
+
+    html += `<button class="leccion-completar-btn" onclick="marcarCompletada('${l.slug}')">
+      ✦ Marcar como completada
+    </button>`;
+
+    document.getElementById('leccion-overlay-body').innerHTML = html;
+    document.getElementById('leccion-overlay-body').scrollTop = 0;
+  }
+
+  function responderQuiz(btn, esCorrecta, explicacion) {
+    const preguntaEl = btn.closest('.quiz-pregunta');
+    if (preguntaEl.querySelector('.correcta, .incorrecta')) return;
+    btn.classList.add(esCorrecta ? 'correcta' : 'incorrecta');
+    if (!esCorrecta) {
+      const correctaBtn = [...preguntaEl.querySelectorAll('.quiz-opcion')].find((b, i) => {
+        const text = b.textContent.trim();
+        return b !== btn;
+      });
+    }
+    if (explicacion) showToast(explicacion);
+  }
+
+  function marcarCompletada(slug) {
+    showToast('¡Lección completada! +50 XP');
+    setTimeout(() => cerrarLeccion(), 1200);
+  }
+
+  function cerrarLeccion() {
+    document.getElementById('leccion-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // Cerrar con el botón físico de Android (back)
+  window.addEventListener('popstate', () => {
+    const vinoOv = document.getElementById('vino-overlay');
+    if (vinoOv.classList.contains('open')) { cerrarVino(); return; }
+    const overlay = document.getElementById('leccion-overlay');
+    if (overlay.classList.contains('open')) { cerrarLeccion(); history.pushState(null, ''); }
+  });
+
+  // ─── XP BAR ───
+  function animateXP(xp, max) {
+    document.getElementById('xp-text').textContent = `${xp} / ${max} XP`;
+    setTimeout(() => {
+      document.getElementById('xp-fill').style.width = `${(xp / max) * 100}%`;
+    }, 500);
+  }
+
+  // ─── TOAST ───
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ─── SERVICE WORKER ───
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+</script>
+
+<!-- ─── LEAFLET MAP ─── -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+(function() {
+  let mapaInit = false;
+  let mapaObj = null;
+
+  const TIPO_COLOR = {
+    tinto:      '#B22222',
+    blanco:     '#2E8B57',
+    espumoso:   '#E8C840',
+    rosado:     '#D46090',
+    mixto:      '#E87040',
+    fortificado:'#8B008B'
+  };
+
+  const TIPO_LABEL = {
+    tinto:'Tinto', blanco:'Blanco', espumoso:'Espumoso',
+    rosado:'Rosado', mixto:'Tinto & Blanco', fortificado:'Fortificado'
+  };
+
+  const REGIONES = [
+    // ── EUROPA CLÁSICA ──
+    { n:'Burdeos',      p:'Francia 🇫🇷', ll:[44.84,-0.58],  t:'tinto',
+      uvas:'Cabernet Sauvignon, Merlot, Cabernet Franc',
+      d:'Capital mundial del vino tinto. Châteaux legendarios, clasificaciones de 1855. Dos riberas del Garona: Médoc al norte, Saint-Émilion y Pomerol al este. Clima oceánico templado.' },
+    { n:'Borgoña',      p:'Francia 🇫🇷', ll:[47.05,4.85],   t:'mixto',
+      uvas:'Pinot Noir, Chardonnay',
+      d:'El terroir supremo. Cote de Nuits para Pinot Noir (Chambolle-Musigny, Gevrey-Chambertin), Cote de Beaune para Chardonnay (Meursault, Montrachet). Grand Cru vs Premier Cru: el universo más complejo del vino.' },
+    { n:'Champagne',    p:'Francia 🇫🇷', ll:[49.08,3.95],   t:'espumoso',
+      uvas:'Pinot Noir, Chardonnay, Pinot Meunier',
+      d:'La única región donde nace el verdadero Champagne. Método tradicional sobre suelos de creta yesosa únicos. Blanc de Blancs (100% Chardonnay) vs Blanc de Noirs. Prestige Cuvée vs NV.' },
+    { n:'Alsacia',      p:'Francia 🇫🇷', ll:[48.18,7.45],   t:'blanco',
+      uvas:'Riesling, Gewürztraminer, Pinot Gris',
+      d:'Frontera franco-alemana protegida por los Vosgos. Aromáticos únicos: Gewürztraminer especiado, Riesling seco y mineral. Vinos varietales sin roble, de identidad única en el mundo.' },
+    { n:'Valle del Ródano', p:'Francia 🇫🇷', ll:[44.90,4.85], t:'tinto',
+      uvas:'Syrah, Grenache, Mourvèdre, Viognier',
+      d:'Norte: Syrah puro en Hermitage y Côte-Rôtie, vinos de poder tánico y longevidad. Sur: blends de Grenache en Châteauneuf-du-Pape. Clima mediterráneo con viento Mistral.' },
+    { n:'Rioja',        p:'España 🇪🇸',  ll:[42.47,-2.45],  t:'tinto',
+      uvas:'Tempranillo, Garnacha, Mazuelo, Graciano',
+      d:'La gran región clásica española. Crianza (2 años), Reserva (3 años), Gran Reserva (5 años). Tradición: roble americano. Revolución moderna: roble francés y vinos de viñedo único.' },
+    { n:'Priorat',      p:'España 🇪🇸',  ll:[41.17,0.72],   t:'tinto',
+      uvas:'Garnacha, Cariñena (Mazuelo)',
+      d:'Suelo de llicorella (pizarra negra con mica) único en el mundo. Vinos de concentración extrema y mineralidad inigualable. DOCa junto a Rioja. Álvaro Palacios redescubrió esta región en 1989.' },
+    { n:'Jerez',        p:'España 🇪🇸',  ll:[36.68,-6.14],  t:'fortificado',
+      uvas:'Palomino Fino, Pedro Ximénez, Moscatel',
+      d:'Cuna del Sherry. Sistema de soleras: mezcla de añadas para consistencia. Fino y Manzanilla: bajo flor de levadura. Amontillado y Oloroso: oxidativos. PX: el más dulce del mundo.' },
+    { n:'Toscana',      p:'Italia 🇮🇹',  ll:[43.40,11.05],  t:'tinto',
+      uvas:'Sangiovese, Cabernet Sauvignon, Merlot',
+      d:'Chianti Classico (Sangiovese en el corazón de Toscana), Brunello di Montalcino (el más longevo de Italia), Vino Nobile di Montepulciano. Super Tuscans: Sassicaia, Ornellaia, fuera del sistema DOC.' },
+    { n:'Piamonte',     p:'Italia 🇮🇹',  ll:[44.70,7.90],   t:'tinto',
+      uvas:'Nebbiolo, Barbera, Dolcetto, Moscato',
+      d:'Barolo y Barbaresco: "El Rey y la Reina del vino italiano". Nebbiolo da altísima acidez, taninos duros y aroma único de rosas, alquitrán y trufa. Requieren mínimo 10 años para develarse.' },
+    { n:'Véneto',       p:'Italia 🇮🇹',  ll:[45.45,11.54],  t:'mixto',
+      uvas:'Corvina, Garganega, Glera',
+      d:'Amarone della Valpolicella (uvas apasadas, 16%+ alcohol), Soave Classico (Garganega volcánico), Prosecco DOC/DOCG. La región más productiva de Italia con joyas de calidad extrema.' },
+    { n:'Douro',        p:'Portugal 🇵🇹', ll:[41.15,-7.50], t:'fortificado',
+      uvas:'Touriga Nacional, Touriga Franca, Tinta Roriz',
+      d:'Valle en terrazas de granito y xisto (esquisto). Oporto Vintage (el más longevo), LBV, Tawny 10/20/30/40 años. Tintos secos Douro DOC: emergentes y de clase mundial.' },
+    { n:'Mosel',        p:'Alemania 🇩🇪', ll:[49.95,6.90],  t:'blanco',
+      uvas:'Riesling',
+      d:'Viñedos en pendientes verticales de pizarra azul (Devonian slate). Riesling de alcohol bajo, acidez eléctrica y envejecimiento casi ilimitado. Escala Prädikat: Kabinett, Spätlese, Auslese, TBA.' },
+    { n:'Rheingau',     p:'Alemania 🇩🇪', ll:[50.00,8.00],  t:'blanco',
+      uvas:'Riesling, Spätburgunder',
+      d:'Cuna histórica del Riesling alemán. Orientado al sur sobre el Rin. Schloss Johannisberg: primera vendimia tardía documentada del mundo (1775). Rieslings más estructurados y secos que el Mosel.' },
+    { n:'Wachau',       p:'Austria 🇦🇹',  ll:[48.35,15.42], t:'blanco',
+      uvas:'Grüner Veltliner, Riesling',
+      d:'Valle del Danubio austriaco. Clasificación única: Steinfeder (ligero), Federspiel (medio), Smaragd (el más poderoso). Grüner Veltliner: pimienta blanca, elegancia herbácea, absolutamente único.' },
+    // ── NUEVO MUNDO ──
+    { n:'Napa Valley',  p:'EE.UU. 🇺🇸',  ll:[38.50,-122.40], t:'tinto',
+      uvas:'Cabernet Sauvignon, Chardonnay, Merlot',
+      d:'El Nuevo Mundo más prestigioso del planeta. Opus One, Screaming Eagle, Harlan Estate. 16 sub-AVAs. Oakville y Rutherford en el piso del valle: Cabernet de estructura tánica y fruta madura exuberante.' },
+    { n:'Sonoma Coast', p:'EE.UU. 🇺🇸',  ll:[38.43,-122.72], t:'mixto',
+      uvas:'Pinot Noir, Chardonnay, Zinfandel',
+      d:'Más fresco y diverso que Napa. Russian River Valley para Pinot Noir de textura sedosa. Sonoma Coast con influencia del Pacífico: Chardonnay de mineralidad y elegancia europea.' },
+    { n:'Willamette Valley', p:'EE.UU. 🇺🇸', ll:[45.12,-123.05], t:'tinto',
+      uvas:'Pinot Noir, Pinot Gris, Chardonnay',
+      d:'Oregón como la alternativa borgoñona de América. Pinot Noir de acidez viva, taninos finos, aroma de frambuesa y tierra húmeda. Clima más fresco que Napa, suelos de volcanita Jory.' },
+    { n:'Mendoza',      p:'Argentina 🇦🇷', ll:[-33.00,-68.83], t:'tinto',
+      uvas:'Malbec, Cabernet Sauvignon, Torrontés',
+      d:'La capital mundial del Malbec. Altitudes de 900-1400m sobre el nivel del mar. Luján de Cuyo: Malbec de cuerpo pleno. Valle de Uco: Malbec de elegancia y finura a 1200m+. Irresistibles para el paladar dominicano.' },
+    { n:'Valle del Maipo', p:'Chile 🇨🇱', ll:[-33.75,-70.65], t:'tinto',
+      uvas:'Cabernet Sauvignon, Carménère, Syrah',
+      d:'Cuna del Cabernet Sauvignon chileno. Suelos de granito en el Alto Maipo (Pirque, Puente Alto). Concha y Toro Don Melchor y Almaviva: íconos del Nuevo Mundo. Carménère: la uva olvidada de Burdeos.' },
+    { n:'Valle de Casablanca', p:'Chile 🇨🇱', ll:[-33.30,-71.38], t:'blanco',
+      uvas:'Sauvignon Blanc, Chardonnay, Pinot Noir',
+      d:'Influencia oceánica del Pacífico a solo 90km de Santiago. Cool-climate: blancos frescos, aromáticos, de alta acidez. El mejor Sauvignon Blanc de Chile, compite con Nueva Zelanda en elegancia.' },
+    { n:'Barossa Valley', p:'Australia 🇦🇺', ll:[-34.53,138.95], t:'tinto',
+      uvas:'Shiraz, Cabernet Sauvignon, Grenache',
+      d:'Shiraz australiano de cuerpo hercúleo. Cepas viejas centenarias de 80-160 años. Penfolds Grange: el vino más emblemático de Oceanía desde 1951. Granache-Shiraz-Mourvèdre (GSM): la gran trinidad australiana.' },
+    { n:'Margaret River', p:'Australia 🇦🇺', ll:[-33.95,115.07], t:'mixto',
+      uvas:'Cabernet Sauvignon, Chardonnay, Semillon',
+      d:'Clima marítimo moderado en la punta suroeste de Australia. Cabernet-Merlot de estructura bordelesa con fruta australiana. Chardonnay de clase mundial. Vamoos, Leeuwin Estate Art Series: a la altura de Borgoña.' },
+    { n:'Marlborough',  p:'Nueva Zelanda 🇳🇿', ll:[-41.50,173.95], t:'blanco',
+      uvas:'Sauvignon Blanc, Pinot Noir, Pinot Gris',
+      d:'Definió para siempre el estilo mundial del Sauvignon Blanc: tropical (maracuyá, mango) y herbáceo (hierba cortada, pimiento) a la vez. Suelos de gravas aluviales, clima fresco y soleado. Cloudy Bay lo puso en el mapa.' },
+    { n:'Stellenbosch', p:'Sudáfrica 🇿🇦', ll:[-33.93,18.86], t:'tinto',
+      uvas:'Cabernet Sauvignon, Pinotage, Chenin Blanc',
+      d:'La región más importante de la viticultura sudafricana desde 1679. Pinotage: cruce único de Pinot Noir x Cinsault creado en SA (1925). Chenin Blanc llamado "Steen" localmente: el más versátil del mundo.' },
+    { n:'Maipo/Colchagua', p:'Chile 🇨🇱', ll:[-34.50,-71.20], t:'tinto',
+      uvas:'Carménère, Cabernet Sauvignon, Merlot',
+      d:'Colchagua: el valle más cálido del centro de Chile. Carménère de cuerpo pleno y pimienta verde característica. Apaltaen Colchagua: Viña Montes Alpha, Miguel Torres Chile. Excelente relación calidad-precio.' },
+  ];
+
+  function tipoStyle(t) {
+    return `background:${TIPO_COLOR[t]||'#888'};color:#fff;`;
+  }
+
+  function crearMarcador(r) {
+    const color = TIPO_COLOR[r.t] || '#888';
+    const icon = L.divIcon({
+      html: `<div class="wine-marker" style="background:${color};width:14px;height:14px;"></div>`,
+      className: '',
+      iconSize: [14, 14],
+      iconAnchor: [7, 7],
+      popupAnchor: [0, -10]
+    });
+    const popup = `
+      <div class="wine-popup" style="min-width:220px;max-width:280px;padding:0.25rem 0.1rem">
+        <h3>${r.n}</h3>
+        <div class="wp-pais">${r.p}</div>
+        <span class="wp-tipo" style="${tipoStyle(r.t)}">${TIPO_LABEL[r.t]||r.t}</span>
+        <div class="wp-uvas"><strong>🍇 Uvas:</strong> ${r.uvas}</div>
+        <div class="wp-desc">${r.d}</div>
+      </div>`;
+    return L.marker(r.ll, { icon }).bindPopup(popup, {
+      maxWidth: 300, className: 'wine-region-popup'
+    });
+  }
+
+  function initMapa() {
+    if (mapaInit) { mapaObj && mapaObj.invalidateSize(); return; }
+    mapaInit = true;
+
+    mapaObj = L.map('wine-map', {
+      center: [20, 5], zoom: 2,
+      zoomControl: true,
+      attributionControl: true
+    });
+
+    // CartoDB Dark Matter — dark tile, gratuito, sin API key
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd', maxZoom: 19
+    }).addTo(mapaObj);
+
+    // Añadir todos los marcadores
+    REGIONES.forEach(r => crearMarcador(r).addTo(mapaObj));
+
+    // Ajustar controles al tema dark
+    document.querySelectorAll('.leaflet-control-zoom a').forEach(a => {
+      a.style.background = '#1e1e1e';
+      a.style.color = '#e8e0d5';
+      a.style.borderColor = '#333';
+    });
+  }
+
+  // Hook al goSection del PWA
+  const _origGoSection = window.goSection;
+  document.addEventListener('DOMContentLoaded', () => {
+    // Sobreescribir goSection para detectar cuando se abre el mapa
+    const navBtns = document.querySelectorAll('.nav-btn');
+    navBtns.forEach(btn => {
+      if (btn.dataset.section === 'mapa') {
+        btn.addEventListener('click', () => {
+          setTimeout(initMapa, 80);
+        });
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
