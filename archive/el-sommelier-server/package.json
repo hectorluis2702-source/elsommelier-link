@@ -1,5 +1,5 @@
 {
-  "name": "elsommelier-app",
+  "name": "@elsommelier/legacy-server",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",

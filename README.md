@@ -1,27 +1,28 @@
-# elsommelier-academy (host temporal: elsommelier-link)
+# elsommelier-academy (host temporal: `elsommelier-link`)
 
-Monorepo de El Sommelier RD Academy (pnpm workspaces + Turborepo).
+Monorepo El Sommelier RD Academy — pnpm workspaces + Turborepo.
 
-> **Nombre:** el código vive temporalmente en el repo GitHub `elsommelier-link`.
-> Después se renombrará a `elsommelier-academy` (Settings → Rename). No hace falta re-importar.
+> Renombrar el repo en GitHub a `elsommelier-academy` cuando quieras (Settings → Rename).
 
-## Decisiones
+## Apps / tools
 
-| # | Decisión | Estado |
-|---|----------|--------|
-| 1 | Cuenta `hectorluis2702-source` | Confirmada |
-| 2 | `apps/web` ← `elsommelier-pwa` **main** (estático) | Hecho |
-| 3 | Higiene/rotación secretos backend antes de `apps/api` | Autorizada — pendiente ejecutar |
+| Path | Origen | Notas |
+|------|--------|-------|
+| `apps/web` | elsommelier-pwa `main` | PWA estática |
+| `apps/api` | elsommelier-backend | Historial limpio (sin `.env` / `node_modules`) |
+| `apps/academy-site` | El-Sommelier-RD-Academy | Marketing / catálogo |
+| `apps/vinotipos` | vinotipos `master` | Vite + Supabase |
+| `tools/motor-agave` | motor-agave | Gemini editorial |
+| `content/wset3-coach` | wset3-coach | Material estudio |
+| `archive/el-sommelier-server` | El-Sommelier-Server | Legado |
+| `packages/database` | nuevo | Migraciones canónicas |
 
-## Estructura
+## Setup
 
+```bash
+pnpm install
+pnpm --filter @elsommelier/web test
+pnpm --filter @elsommelier/api test
 ```
-apps/web/          ← elsommelier-pwa main (subtree, SHA ancestro b4100d8)
-apps/api/          ← pendiente (tras higiene)
-apps/academy-site/ ← pendiente
-...
-```
 
-## Scripts raíz
-
-- `pnpm install` / `pnpm build` / `pnpm test` (vía Turbo)
+Secretos: `docs/SECRETS_ROTATION.md`. API usa `.env` local (no commitear).

@@ -1,0 +1,13 @@
+{
+  "name": "@elsommelier/academy-site",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npx --yes serve -l 3002 .",
+    "build": "mkdir -p dist && cp index.html cursos.html dist/ && (cp -R assets dist/ 2>/dev/null || true)",
+    "start": "npx --yes serve -l 3002 dist",
+    "lint": "node -e \"console.log('lint: academy-site — skipped')\"",
+    "typecheck": "node -e \"console.log('typecheck: academy-site — skipped')\"",
+    "test": "node -e \"const fs=require('fs'); for (const f of ['index.html','cursos.html']) fs.accessSync(f); console.log('test: smoke ok')\""
+  }
+}

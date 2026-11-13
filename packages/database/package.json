@@ -1,0 +1,12 @@
+{
+  "name": "@elsommelier/database",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "db:migrate": "echo 'Run supabase migrations against a TEST project only' && exit 0",
+    "build": "node -e \"console.log('database package — migrations only')\"",
+    "lint": "node -e \"process.exit(0)\"",
+    "typecheck": "node -e \"process.exit(0)\"",
+    "test": "node -e \"process.exit(0)\""
+  }
+}

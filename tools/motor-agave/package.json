@@ -1,7 +1,15 @@
 {
-  "name": "motor-agave",
+  "name": "@elsommelier/motor-agave",
+  "private": true,
   "version": "1.0.0",
   "description": "Motor de generación de enciclopedia con IA",
+  "scripts": {
+    "dev": "node -e \"console.log('motor-agave: open index.html or deploy api/generar.js on Vercel')\"",
+    "build": "node -e \"console.log('build: motor-agave — static + api')\"",
+    "lint": "node -e \"console.log('lint: motor-agave — skipped')\"",
+    "typecheck": "node -e \"console.log('typecheck: motor-agave — skipped')\"",
+    "test": "node -e \"const fs=require('fs'); fs.accessSync('index.html'); fs.accessSync('api/generar.js'); console.log('test: smoke ok')\""
+  },
   "dependencies": {
     "@google/generative-ai": "^0.14.0",
     "@supabase/supabase-js": "^2.44.4"
