@@ -1,0 +1,9 @@
+{
+  "name": "motor-agave",
+  "version": "1.0.0",
+  "description": "Motor de generación de enciclopedia con IA",
+  "dependencies": {
+    "@google/generative-ai": "^0.14.0",
+    "@supabase/supabase-js": "^2.44.4"
+  }
+}
