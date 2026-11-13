@@ -1,0 +1,13 @@
+{
+  "name": "@elsommelier/web",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npx --yes serve -l 3000 .",
+    "build": "mkdir -p dist && cp -R index.html manifest.json sw.js assets dist/ && (cp -R icon-512.png dist/ 2>/dev/null || true) && (cp -R icons dist/ 2>/dev/null || true) && (cp -R kdp-formatter dist/ 2>/dev/null || true)",
+    "start": "npx --yes serve -l 3000 dist",
+    "lint": "node -e \"console.log('lint: static web — no linter configured')\"",
+    "typecheck": "node -e \"console.log('typecheck: static web — skipped')\"",
+    "test": "node -e \"const fs=require('fs'); for (const f of ['index.html','manifest.json','sw.js']) { if (!fs.existsSync(f)) { console.error('missing', f); process.exit(1);} } console.log('test: smoke files ok')\""
+  }
+}
