@@ -1,6 +1,6 @@
-# Vercel + rename (elsommelier-link → elsommelier-academy)
+# Vercel setup — monorepo `elsommelier-link`
 
-## A. Renombrar el repo en GitHub
+## A. Renombrar el repo en GitHub (opcional)
 
 1. Abre https://github.com/hectorluis2702-source/elsommelier-link
 2. **Settings** → sección **General** → **Repository name**
