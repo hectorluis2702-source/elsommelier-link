@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <!-- viewport-fit=cover habilita safe-area-inset en iPhone con notch / Dynamic Island -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <title>Vinotipos - Aprende Enologia Jugando con Corchito</title>
+  <meta name="description" content="Plataforma de gamificacion enologica interactiva. Aprende sobre catas, cepas del mundo, maridajes y regiones vitivinicolas con Corchito.">
+
+  <!-- PWA: Color de barra de estado del navegador (Android Chrome) -->
+  <meta name="theme-color" content="#800020">
+
+  <!-- PWA: Manifest -->
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- PWA: iOS Safari — comportamiento standalone al agregar a pantalla de inicio -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Vinotipos">
+  <link rel="apple-touch-icon" href="/icons/icon.svg">
+
+  <!-- PWA: Windows / Edge -->
+  <meta name="msapplication-TileColor" content="#800020">
+  <meta name="msapplication-TileImage" content="/icons/icon.svg">
+
+  <!-- Preconectar Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Sistema Visual v2: Cormorant Garamond (titulos), DM Sans (cuerpo/UI), DM Mono (datos/XP) -->
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Preload main CSS and modulepreload the JS entry so V2 assets and CourseEngine are prioritized -->
+  <link rel="preload" href="./src/styles/main.css" as="style">
+  <link rel="stylesheet" href="./src/styles/main.css">
+
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- Header inyectado por HeaderProgress.js -->
+    <header id="header-root" role="banner"></header>
+
+    <!-- Aviso de racha en riesgo (StreakBanner.js) -->
+    <div id="streak-banner-root"></div>
+
+    <!-- Area principal de contenido -->
+    <main id="main-content" class="main-content" role="main"></main>
+
+    <!-- Modales (Cava, Regiones) -->
+    <div id="modal-root" role="dialog" aria-modal="true"></div>
+
+    <!-- Toast de Notificaciones -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Advertencia legal permanente (consumo responsable) -->
+    <footer id="footer-root" class="app-footer" role="contentinfo"></footer>
+  </div>
+
+  <!-- Verificacion de edad 18+: bloquea el resto de la app hasta confirmar -->
+  <div id="age-gate-root"></div>
+
+  <!-- Global config to ensure Visual v2 and updated CourseEngine are used by runtime -->
+  <script>
+    window.VINOTIPOS_CONFIG = window.VINOTIPOS_CONFIG || {};
+    window.VINOTIPOS_CONFIG.visualVersion = 'v2';
+  </script>
+
+  <link rel="modulepreload" href="./src/main.js">
+  <script type="module" src="./src/main.js"></script>
+  <!-- deploy-trigger-test: commit trivial para verificar si el auto-deploy de Vercel se dispara -->
+</body>
+</html>

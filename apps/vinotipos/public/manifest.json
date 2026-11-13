@@ -1,0 +1,28 @@
+{
+  "name": "Vinotipos — Aprende Enologia Jugando",
+  "short_name": "Vinotipos",
+  "description": "Plataforma educativa de enologia gamificada con la mascota Corchito. Explora regiones vitivinicolas del mundo, colecciona botellas y aprende cata con Corchito.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#121212",
+  "theme_color": "#800020",
+  "lang": "es",
+  "categories": ["education", "games", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": []
+}

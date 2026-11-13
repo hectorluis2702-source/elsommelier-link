@@ -1,0 +1,2094 @@
+/* ==========================================================================
+   VINOTIPOS 2.0 - DESIGN SYSTEM & STYLESHEET
+   Official Theme: Dark Elegance Palette
+   - Borgona: #800020
+   - Dorado:  #B8860B
+   - Fondo:   #121212
+   - Crema:   #F5EFE0
+   ========================================================================== */
+
+:root {
+  /* Official Palette Colors */
+  --color-borgona: #800020;
+  --color-dorado: #B8860B;
+  --color-fondo: #121212;
+  --color-crema: #F5EFE0;
+
+  /* Derived Glassmorphism & UI Tokens */
+  --bg-dark: #121212;
+  --bg-deep: #0a0908;
+  --bg-card: rgba(128, 0, 32, 0.25);
+  --bg-card-hover: rgba(128, 0, 32, 0.4);
+
+  --primary-wine: #800020;
+  --primary-light: #A01535;
+  --borgona-light: #a8324a;
+  --primary-glow: rgba(128, 0, 32, 0.5);
+
+  --accent-gold: #B8860B;
+  --accent-gold-glow: rgba(184, 134, 11, 0.45);
+  --accent-gold-light: #D4A017;
+  --dorado-light: #d9ab3a;
+
+  --text-main: #F5EFE0;
+  --text-muted: rgba(245, 239, 224, 0.7);
+  --text-gold: #B8860B;
+  --crema-dim: #b8ae98;
+
+  --status-success: #27AE60;
+  --status-error: #D92538;
+  --status-warning: #E67E22;
+  --status-info: #2980B9;
+  --exito: #7fb37f;
+
+  /* Glassmorphism & Borders */
+  --glass-bg: rgba(18, 18, 18, 0.92);
+  --glass-border: rgba(184, 134, 11, 0.35);
+  --glass-border-hover: rgba(184, 134, 11, 0.75);
+  --glass-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.85);
+  --linea: rgba(184, 134, 11, 0.22);
+
+  /* Typography — Sistema Visual v2 (ver design-reference/vinotipos-mockup-pantallas-v2-20260805.html) */
+  --font-title: 'Cormorant Garamond', serif;
+  --font-body: 'DM Sans', -apple-system, sans-serif;
+  --font-mono: 'DM Mono', 'DM Sans', monospace;
+
+  /* Radii & Transitions */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-full: 9999px;
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Safe area for iPhone notch / home indicator */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Reset & Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  /* Prevent font size inflation on iOS */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-fondo);
+  /* No background-attachment:fixed — causa parpadeo en iOS Safari */
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(128, 0, 32, 0.45) 0%, transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(184, 134, 11, 0.25) 0%, transparent 50%);
+  background-attachment: scroll;
+  color: var(--color-crema);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* App Container */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 12px calc(24px + var(--safe-bottom)) 12px;
+}
+
+/* Glass Card */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--glass-shadow);
+  transition: border-color var(--transition-fast);
+}
+
+.glass-panel:hover {
+  border-color: var(--glass-border-hover);
+}
+
+/* ==========================================================================
+   HEADER & PROGRESS BAR
+   ========================================================================== */
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  margin-top: 12px;
+  margin-bottom: 10px;
+  border-radius: var(--radius-lg);
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+/* ==========================================================================
+   SISTEMA DE VIDAS — "5 copas" de Corchito
+   ========================================================================== */
+.lives-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 7px 14px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-full);
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.lives-bar-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  display: none;
+  white-space: nowrap;
+}
+
+.lives-cups {
+  display: flex;
+  gap: 4px;
+}
+
+.life-cup {
+  font-size: 1rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 4px rgba(184, 134, 11, 0.35));
+  transition: opacity var(--transition-fast), filter var(--transition-fast);
+}
+
+.life-cup-empty {
+  opacity: 0.25;
+  filter: grayscale(1);
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-title);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--color-dorado);
+  text-decoration: none;
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.brand-badge {
+  font-size: 0.62rem;
+  background: linear-gradient(135deg, var(--color-dorado), #8A6408);
+  color: var(--color-fondo);
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.user-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(184, 134, 11, 0.25);
+  padding: 6px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-crema);
+  white-space: nowrap;
+  /* Minimum touch target height */
+  min-height: 36px;
+}
+
+.stat-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* On mobile: hide text labels, show icon + number only */
+.stat-label {
+  display: none;
+}
+
+.stat-gold {
+  color: var(--color-dorado);
+}
+
+.stat-streak {
+  color: #E67E22;
+}
+
+.btn-header {
+  background: linear-gradient(135deg, var(--color-borgona), #5A0016);
+  border: 1px solid var(--color-dorado);
+  color: var(--color-crema);
+  padding: 0 14px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-family: var(--font-title);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  min-width: 44px;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.btn-header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--accent-gold-glow);
+}
+
+/* Hide "La Cava Digital" text on smallest screens, show icon only */
+.btn-header-label {
+  display: none;
+}
+
+/* ==========================================================================
+   MASCOT 'CORCHITO' & ANIMATIONS
+   ========================================================================== */
+.corchito-wrapper {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.corchito-svg {
+  width: 100px;
+  height: 100px;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.7));
+  transition: transform var(--transition-normal);
+}
+
+.corchito-modal-slot .corchito-svg {
+  width: 80px;
+  height: 80px;
+}
+
+/* Animations per State */
+.corchito-idle .corchito-body {
+  animation: floatBreathing 3s ease-in-out infinite;
+}
+
+.corchito-acierto .corchito-body {
+  animation: happyBounce 0.6s ease-in-out infinite alternate;
+}
+
+.corchito-fallo .corchito-body {
+  animation: sadDroop 1s ease forwards;
+}
+
+.corchito-racha_fallos {
+  animation: dizzyShake 0.4s ease-in-out infinite;
+}
+
+.corchito-speech-bubble {
+  position: absolute;
+  top: -48px;
+  left: 50%;
+  /* --bubble-x controla el desplazamiento horizontal: centrado por defecto,
+     pero se sobreescribe abajo cuando Corchito esta pegado a un borde de
+     pantalla (CourseEngine a la izquierda, modal de region a la derecha) para
+     que el globo nunca se corte contra el viewport en moviles angostos. */
+  --bubble-x: -50%;
+  transform: translateX(var(--bubble-x));
+  background: rgba(184, 134, 11, 0.12);
+  border: 1px solid var(--linea);
+  color: var(--color-crema);
+  padding: 8px 14px;
+  /* Colita real (Sistema Visual v2): esquina inferior "pellizcada" en vez de
+     un triangulo aparte. No puede desbordar el viewport porque es parte del
+     propio box, no un pseudo-elemento posicionado por separado. */
+  border-radius: 14px 14px 14px 4px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.35;
+  /* Antes: white-space:nowrap + max-width fijo + ellipsis truncaba el texto
+     en pantallas angostas. Ahora envuelve el texto y limita el ancho al
+     viewport disponible, mostrando la frase completa siempre. */
+  white-space: normal;
+  width: max-content;
+  max-width: min(220px, calc(100vw - 32px));
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  animation: speechPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* CourseEngine (reto + pantalla "sin vidas"): Corchito vive pegado al borde
+   izquierdo del panel. Anclamos el globo hacia la derecha en vez de
+   centrarlo para que no se corte contra el borde de la pantalla; la colita
+   (esquina inferior-izquierda) ya apunta naturalmente hacia el ícono. */
+.ce-panel .corchito-speech-bubble {
+  left: 0;
+  --bubble-x: 0%;
+}
+
+/* Modal de region (parada educativa): Corchito vive pegado al borde derecho.
+   Anclamos el globo hacia la izquierda y volteamos la colita a la esquina
+   inferior-derecha para que siga apuntando hacia el ícono. */
+.region-modal-header .corchito-speech-bubble {
+  left: auto;
+  right: 0;
+  --bubble-x: 0%;
+  border-radius: 14px 14px 4px 14px;
+}
+
+/* Keyframes */
+@keyframes floatBreathing {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.02); }
+}
+
+@keyframes happyBounce {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-12px) rotate(4deg); }
+}
+
+@keyframes sadDroop {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(6px) scale(0.95); filter: grayscale(0.5); }
+}
+
+@keyframes dizzyShake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-8deg) translateY(-2px); }
+  75% { transform: rotate(8deg) translateY(2px); }
+}
+
+@keyframes popIn {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.6) translateY(10px); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+}
+
+/* Animacion propia del globo de dialogo (en vez de reutilizar "popIn"): ese
+   nombre se redefine mas abajo para .modal-content en el breakpoint de
+   600px+, y heredar esa redefinicion le quitaria el translateX al globo
+   durante la animacion en tablet/desktop. Usa --bubble-x para respetar el
+   anclaje (centrado, izquierda o derecha) definido en .corchito-speech-bubble. */
+@keyframes speechPopIn {
+  0% { opacity: 0; transform: translateX(var(--bubble-x)) scale(0.6) translateY(10px); }
+  100% { opacity: 1; transform: translateX(var(--bubble-x)) scale(1) translateY(0); }
+}
+
+/* Micro-animaciones GSAP (Corchito.playCorchitoReaction) — el salto/temblor
+   en si lo anima GSAP inline sobre .corchito-svg; estas clases solo cubren
+   el sparkle del acierto en racha y las piezas de confeti de la celebracion,
+   ambas creadas/removidas por JS y nunca disparadas si prefers-reduced-motion
+   esta activo (ver Corchito.js). */
+.corchito-sparkle {
+  position: absolute;
+  top: 2px;
+  right: -4px;
+  font-size: 1.3rem;
+  pointer-events: none;
+  animation: corchitoSparklePop 0.7s ease-out forwards;
+}
+
+@keyframes corchitoSparklePop {
+  0% { opacity: 0; transform: scale(0.4) rotate(-10deg); }
+  40% { opacity: 1; transform: scale(1.15) rotate(8deg); }
+  100% { opacity: 0; transform: scale(0.9) translateY(-14px) rotate(0deg); }
+}
+
+.corchito-confetti-piece {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  width: 6px;
+  height: 10px;
+  border-radius: 1px;
+  pointer-events: none;
+  transform: translate(-50%, 0);
+  animation: corchitoConfettiFall 1s var(--confetti-delay, 0s) ease-in forwards;
+}
+
+@keyframes corchitoConfettiFall {
+  0% { opacity: 0; transform: translate(-50%, 0) rotate(0deg); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--confetti-x, 0px)), 90px) rotate(340deg); }
+}
+
+/* Todas las animaciones de Corchito (CSS + GSAP) respetan esta preferencia.
+   El lado GSAP se auto-limita en Corchito.playCorchitoReaction; este bloque
+   cubre el lado CSS: las animaciones continuas por estado se apagan y el
+   globo de dialogo aparece sin el "pop" de escala/traslacion. */
+@media (prefers-reduced-motion: reduce) {
+  .corchito-idle .corchito-body,
+  .corchito-acierto .corchito-body,
+  .corchito-fallo .corchito-body,
+  .corchito-racha_fallos,
+  .corchito-speech-bubble {
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   WORLD MAP & REGION NODES
+   ========================================================================== */
+.world-map-container {
+  padding: 20px 16px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.map-title {
+  font-family: var(--font-title);
+  font-style: italic;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-crema);
+  line-height: 1.2;
+}
+
+.map-subtitle {
+  color: var(--crema-dim);
+  font-size: 0.88rem;
+  margin-top: 4px;
+}
+
+.region-country {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-dorado);
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   ATLAS DEL VINO — panel de pines + lista de regiones (Sistema Visual v2)
+   ========================================================================== */
+.atlas-panel {
+  position: relative;
+  margin-top: 16px;
+  height: 220px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(184, 134, 11, 0.16), transparent 55%),
+    linear-gradient(160deg, #1b140d, #0c0a08);
+  border: 1px solid var(--linea);
+}
+
+.atlas-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background-image: repeating-radial-gradient(circle at 20% 20%, rgba(245, 239, 224, 0.03) 0 1px, transparent 1px 4px);
+}
+
+.atlas-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
+  transition: transform var(--transition-fast);
+}
+
+.atlas-pin.active {
+  background: radial-gradient(circle, var(--dorado-light), var(--color-dorado));
+  box-shadow: 0 0 18px rgba(184, 134, 11, 0.65);
+  border: none;
+}
+
+.atlas-pin.locked {
+  background: rgba(245, 239, 224, 0.08);
+  color: rgba(245, 239, 224, 0.4);
+  border: 1px dashed rgba(245, 239, 224, 0.25);
+  cursor: not-allowed;
+}
+
+.atlas-pin.active:hover {
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+.atlas-caption {
+  padding: 12px 4px 0;
+  font-size: 0.75rem;
+  color: var(--crema-dim);
+  text-align: center;
+}
+
+.atlas-list {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.atlas-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(245, 239, 224, 0.03);
+  border: 1px solid var(--linea);
+  border-radius: 14px;
+  padding: 11px 13px;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.atlas-row.current {
+  border-color: var(--color-dorado);
+  background: rgba(184, 134, 11, 0.08);
+}
+
+.atlas-row.locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.atlas-row:not(.locked):hover {
+  transform: translateY(-2px);
+  border-color: var(--glass-border-hover);
+}
+
+.atlas-row-flag {
+  font-size: 1.25rem;
+  width: 30px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.atlas-row-info {
+  min-width: 0;
+}
+
+.atlas-row-name {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-crema);
+}
+
+.atlas-row-sub {
+  font-size: 0.72rem;
+  color: var(--crema-dim);
+}
+
+.atlas-row-badge {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--dorado-light);
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   MODALS — mobile full-screen, desktop floating
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: stretch;
+  padding: 0;
+  animation: overlayFadeIn 0.2s ease;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  width: 100%;
+  max-height: 92vh;
+  max-height: 92dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 24px 20px calc(24px + var(--safe-bottom)) 20px;
+  position: relative;
+  background: var(--glass-bg);
+  border: 1px solid var(--color-dorado);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(60px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-close-btn {
+  position: sticky;
+  float: right;
+  top: 0;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--color-dorado);
+  color: var(--color-crema);
+  /* Minimum 44x44 touch target */
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.modal-close-btn:hover {
+  background: var(--color-borgona);
+}
+
+/* Region modal specific layout */
+.region-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 12px;
+  clear: both;
+}
+
+.region-modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.region-modal-flag {
+  font-size: 2.2rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.region-modal-name {
+  font-family: var(--font-title);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  line-height: 1.1;
+}
+
+.corchito-modal-slot {
+  flex-shrink: 0;
+}
+
+.region-modal-desc {
+  margin-bottom: 18px;
+  line-height: 1.6;
+  color: var(--text-main);
+  font-size: 0.95rem;
+}
+
+.terroir-panel {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.terroir-panel-title {
+  color: var(--accent-gold-light);
+  margin-bottom: 14px;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.terroir-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.region-modal-cta {
+  width: 100%;
+  margin-top: 20px;
+  min-height: 50px;
+  font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   STREAK BANNER — aviso de racha en riesgo (Fase 2, prompt 2)
+   ========================================================================== */
+.streak-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-md);
+  border-color: rgba(230, 126, 34, 0.5);
+  background: rgba(230, 126, 34, 0.08);
+}
+
+.streak-banner-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.streak-banner-text {
+  flex: 1 1 200px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+.streak-banner-freezes {
+  display: block;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.78rem;
+}
+
+.streak-freeze-btn {
+  background: rgba(41, 128, 185, 0.2);
+  border: 1px solid var(--status-info);
+  color: var(--text-main);
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  cursor: pointer;
+  min-height: 40px;
+  transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.streak-freeze-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(41, 128, 185, 0.35);
+}
+
+.streak-freeze-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   CAVA DIGITAL MODAL
+   ========================================================================== */
+.cava-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 12px;
+  clear: both;
+}
+
+.cava-title {
+  font-family: var(--font-title);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  line-height: 1.1;
+}
+
+.cava-subtitle {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  margin-top: 4px;
+}
+
+.cava-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.bottle-card {
+  padding: 16px;
+  border-radius: var(--radius-md);
+}
+
+.bottle-card.unlocked {
+  border-color: var(--accent-gold);
+  /* Resplandor sutil por rareza (Sistema Visual v2): una desbloqueada se
+     distingue de un vistazo, sin necesitar leer el texto. */
+  box-shadow: 0 0 22px rgba(184, 134, 11, 0.18);
+}
+
+.bottle-card.locked {
+  opacity: 0.55;
+  filter: grayscale(0.8);
+}
+
+.bottle-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.bottle-icon {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.bottle-name {
+  font-family: var(--font-title);
+  font-size: 1.1rem;
+  color: var(--text-main);
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.bottle-region {
+  font-size: 0.75rem;
+  color: var(--accent-gold-light);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.bottle-notes {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px;
+  border-radius: var(--radius-sm);
+}
+
+/* Candado discreto (Sistema Visual v2): un ícono chico en vez del bloque de
+   aviso grande que había antes — ocupa el mismo lugar que la etiqueta de
+   rareza cuando la botella está bloqueada. */
+.bottle-lock-badge {
+  font-size: 0.95rem;
+  opacity: 0.5;
+}
+
+.bottle-req-hint {
+  font-size: 0.78rem;
+  color: var(--crema-dim);
+}
+
+/* ==========================================================================
+   TOAST NOTIFICATIONS
+   ========================================================================== */
+.toast-container {
+  position: fixed;
+  bottom: calc(24px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   RESPONSIVE — TABLET (600px+)
+   ========================================================================== */
+@media (min-width: 600px) {
+  .app-container {
+    padding: 0 20px calc(32px + var(--safe-bottom)) 20px;
+  }
+
+  .header-bar {
+    padding: 14px 20px;
+  }
+
+  .brand-logo {
+    font-size: 1.35rem;
+  }
+
+  .stat-pill {
+    padding: 6px 14px;
+    font-size: 0.88rem;
+  }
+
+  .stat-label {
+    display: inline;
+  }
+
+  .btn-header-label {
+    display: inline;
+  }
+
+  .lives-bar-label {
+    display: inline;
+  }
+
+  .life-cup {
+    font-size: 1.15rem;
+  }
+
+  .map-title {
+    font-size: 1.7rem;
+  }
+
+  .atlas-panel {
+    height: 280px;
+  }
+
+  .modal-overlay {
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .modal-content {
+    max-width: 680px;
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    max-height: 88vh;
+    animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes popIn {
+    0% { opacity: 0; transform: scale(0.92) translateY(16px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    float: none;
+    margin-bottom: 0;
+  }
+
+  .cava-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .corchito-svg {
+    width: 120px;
+    height: 120px;
+  }
+
+  .corchito-modal-slot .corchito-svg {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE — DESKTOP (900px+)
+   ========================================================================== */
+@media (min-width: 900px) {
+  .app-container {
+    padding: 0 24px 40px 24px;
+  }
+
+  .header-bar {
+    padding: 16px 28px;
+    margin-top: 20px;
+    margin-bottom: 28px;
+  }
+
+  .brand-logo {
+    font-size: 1.5rem;
+    gap: 12px;
+  }
+
+  .user-stats {
+    gap: 16px;
+  }
+
+  .stat-pill {
+    padding: 7px 16px;
+    font-size: 0.92rem;
+    gap: 8px;
+  }
+
+  .map-title {
+    font-size: 1.8rem;
+  }
+
+  .world-map-container {
+    padding: 32px 28px;
+  }
+
+  .atlas-panel {
+    height: 320px;
+  }
+
+  .atlas-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .skin-list {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .cava-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+
+  .modal-content {
+    max-width: 760px;
+    padding: 36px;
+  }
+
+  .cava-title {
+    font-size: 1.9rem;
+  }
+
+  .region-modal-name {
+    font-size: 1.8rem;
+  }
+
+  .corchito-svg {
+    width: 140px;
+    height: 140px;
+  }
+
+  .corchito-modal-slot .corchito-svg {
+    width: 120px;
+    height: 120px;
+  }
+}
+
+/* ==========================================================================
+   AGE SPLASH — "momento de deseo" antes de la pregunta de edad (Sistema
+   Visual v2). Puramente decorativo: no decide nada, solo lleva a la pregunta
+   real de abajo (.age-gate-*), que es la que de verdad bloquea la app.
+   ========================================================================== */
+.age-splash-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 24px calc(40px + var(--safe-bottom)) 24px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(184, 134, 11, 0.20), transparent 55%),
+    radial-gradient(circle at 20% 90%, rgba(128, 0, 32, 0.35), transparent 60%),
+    linear-gradient(180deg, #151009 0%, var(--bg-deep) 100%);
+}
+
+.age-splash-map-texture {
+  position: absolute;
+  inset: 0;
+  opacity: 0.16;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(184, 134, 11, 0.5) 0 1px, transparent 1px 46px),
+    repeating-linear-gradient(90deg, rgba(184, 134, 11, 0.5) 0 1px, transparent 1px 46px);
+  mask-image: radial-gradient(circle at 50% 40%, black, transparent 75%);
+  -webkit-mask-image: radial-gradient(circle at 50% 40%, black, transparent 75%);
+}
+
+.age-splash-glow {
+  position: absolute;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  height: 260px;
+  max-width: 70vw;
+  max-height: 70vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(184, 134, 11, 0.35), transparent 70%);
+  filter: blur(4px);
+}
+
+.age-splash-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 360px;
+}
+
+.age-splash-corchito {
+  margin-bottom: 4px;
+}
+
+.age-splash-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--dorado-light);
+  margin: 16px 0 8px;
+}
+
+.age-splash-title {
+  font-family: var(--font-title);
+  font-style: italic;
+  font-weight: 600;
+  font-size: clamp(1.9rem, 8vw, 2.4rem);
+  line-height: 1.1;
+  color: var(--color-crema);
+  margin-bottom: 14px;
+}
+
+.age-splash-sub {
+  font-size: 0.88rem;
+  color: var(--crema-dim);
+  line-height: 1.6;
+  max-width: 280px;
+  margin: 0 auto 26px;
+}
+
+.age-splash-cta {
+  width: 100%;
+  max-width: 280px;
+  min-height: 52px;
+  font-size: 0.95rem;
+}
+
+.age-splash-ghost {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: var(--crema-dim);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.age-splash-legal {
+  font-size: 0.68rem;
+  color: rgba(245, 239, 224, 0.38);
+  margin-top: 20px;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   AGE GATE — verificación de edad 18+ (obligatoria)
+   ========================================================================== */
+.age-gate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: radial-gradient(circle at 50% 15%, rgba(128, 0, 32, 0.4), var(--color-fondo) 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px calc(20px + var(--safe-bottom)) 20px 20px;
+  overflow-y: auto;
+}
+
+.age-gate-panel {
+  max-width: 460px;
+  width: 100%;
+  padding: 32px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.age-gate-corchito {
+  margin-bottom: 8px;
+}
+
+.age-gate-title {
+  font-family: var(--font-title);
+  font-style: italic;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.age-gate-text {
+  color: var(--text-main);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
+.age-gate-question {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--color-crema);
+  margin-bottom: 18px;
+}
+
+.age-gate-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 18px;
+}
+
+.age-gate-btn-yes {
+  width: 100%;
+  min-height: 48px;
+}
+
+.age-gate-btn-no {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  padding: 12px 14px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-family: var(--font-body);
+  cursor: pointer;
+  min-height: 44px;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.age-gate-btn-no:hover {
+  border-color: var(--color-borgona);
+  color: var(--color-crema);
+}
+
+.age-gate-disclaimer {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  border-top: 1px solid var(--glass-border);
+  padding-top: 14px;
+  width: 100%;
+}
+
+@media (min-width: 600px) {
+  .age-gate-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .age-gate-btn-yes,
+  .age-gate-btn-no {
+    flex: 1;
+  }
+}
+
+/* ==========================================================================
+   FOOTER — advertencia legal permanente de consumo responsable
+   ========================================================================== */
+.app-footer {
+  margin-top: 24px;
+  padding: 16px 12px calc(16px + var(--safe-bottom)) 12px;
+  text-align: center;
+}
+
+.footer-disclaimer {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* ==========================================================================
+   MAP ROUTE ANIMATION — Corchito viaja al desbloquear region (GSAP)
+   ========================================================================== */
+.map-route-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  border-radius: var(--radius-lg);
+  background: rgba(10, 10, 10, 0.82);
+  backdrop-filter: blur(3px);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.map-route-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.map-route-dot {
+  fill: var(--color-dorado);
+}
+
+.map-route-marker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 1.9rem;
+  line-height: 1;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.8));
+}
+
+.map-route-caption {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--color-crema);
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   COURSE ENGINE — motor de preguntas real (Fase 2, prompt 2)
+   ========================================================================== */
+.ce-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.ce-loading {
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-main);
+  padding: 24px 8px;
+}
+
+/* Pantalla "Sin Vidas" (Sistema Visual v2) — fricción amable, nunca regaño. */
+.ce-blocked-panel {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(128, 0, 32, 0.28), transparent 60%),
+    var(--glass-bg);
+  text-align: center;
+  align-items: center;
+  padding-top: 32px;
+  padding-bottom: 32px;
+}
+
+.ce-blocked-corchito {
+  margin-bottom: 6px;
+}
+
+.ce-blocked-title {
+  font-family: var(--font-title);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--color-crema);
+  line-height: 1.2;
+  margin-bottom: 10px;
+}
+
+.ce-blocked-text {
+  max-width: 260px;
+  margin: 0 auto 20px;
+  color: var(--crema-dim);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.ce-blocked-timer {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  color: var(--dorado-light);
+  letter-spacing: 0.05em;
+  margin-bottom: 20px;
+}
+
+.ce-blocked-refresh-btn {
+  width: 100%;
+  max-width: 280px;
+  min-height: 50px;
+  margin-bottom: 12px;
+}
+
+.ce-blocked-refresh-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.ce-blocked-ghost {
+  font-size: 0.78rem;
+  color: var(--crema-dim);
+}
+
+.ce-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  clear: both;
+}
+
+.ce-progress {
+  flex: 1;
+  min-width: 0;
+}
+
+.ce-progress-label {
+  display: block;
+  font-family: var(--font-title);
+  font-weight: 700;
+  color: var(--accent-gold);
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.ce-progress-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.ce-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(245, 239, 224, 0.15);
+  border: 1px solid var(--glass-border);
+  flex-shrink: 0;
+}
+
+.ce-dot-done {
+  background: var(--status-success);
+  border-color: var(--status-success);
+}
+
+.ce-dot-current {
+  background: var(--color-dorado);
+  border-color: var(--color-dorado);
+  box-shadow: 0 0 8px var(--accent-gold-glow);
+}
+
+.ce-review-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--status-info);
+  background: rgba(41, 128, 185, 0.15);
+  border: 1px solid var(--status-info);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  width: fit-content;
+  margin-bottom: 14px;
+}
+
+.ce-image-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4.5rem;
+  height: 140px;
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--glass-border);
+  margin-bottom: 16px;
+}
+
+.ce-description-box {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-main);
+  margin-bottom: 16px;
+}
+
+.ce-prompt {
+  font-family: var(--font-title);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-crema);
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.ce-answer-area {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ce-option {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(184, 134, 11, 0.3);
+  color: var(--text-main);
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  min-height: 48px;
+  transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
+}
+
+.ce-option:hover:not(:disabled) {
+  border-color: var(--color-dorado);
+  transform: translateY(-1px);
+}
+
+.ce-option-selected {
+  border-color: var(--color-dorado);
+  background: rgba(184, 134, 11, 0.15);
+}
+
+.ce-option-correct {
+  border-color: var(--status-success);
+  background: rgba(39, 174, 96, 0.18);
+  color: var(--status-success);
+}
+
+.ce-option-wrong {
+  border-color: var(--status-error);
+  background: rgba(217, 37, 56, 0.18);
+  color: #ff8f9c;
+}
+
+.ce-option:disabled {
+  cursor: default;
+}
+
+.ce-text-input {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(184, 134, 11, 0.3);
+  color: var(--text-main);
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-family: var(--font-body);
+  min-height: 48px;
+}
+
+.ce-text-input:focus {
+  outline: none;
+  border-color: var(--color-dorado);
+}
+
+.ce-feedback {
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.ce-feedback-ok {
+  background: rgba(39, 174, 96, 0.15);
+  border: 1px solid var(--status-success);
+  color: var(--status-success);
+}
+
+.ce-feedback-bad {
+  background: rgba(217, 37, 56, 0.15);
+  border: 1px solid var(--status-error);
+  color: #ff8f9c;
+}
+
+/* ==========================================================================
+   EL RESTAURANTE DE CORCHITO — Etapa 1: trivia de maridaje.
+   Reutiliza casi todas las clases .ce-* de arriba (mismo look que un reto de
+   region); esta es la unica clase nueva: el "por que" SAT dentro del feedback.
+   ========================================================================== */
+.re-justification {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(245, 239, 224, 0.15);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--crema-dim);
+}
+
+.ce-action-btn {
+  width: 100%;
+  min-height: 50px;
+}
+
+/* Resumen de sesion */
+.ce-summary-title {
+  font-family: var(--font-title);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.ce-summary-stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.ce-summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.ce-summary-stat span {
+  font-family: var(--font-title);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--color-crema);
+}
+
+.ce-summary-stat small {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.ce-unlock-banner,
+.ce-streak-banner {
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  margin-bottom: 14px;
+}
+
+.ce-unlock-banner {
+  background: rgba(184, 134, 11, 0.15);
+  border: 1px solid var(--color-dorado);
+  color: var(--accent-gold-light);
+}
+
+.ce-streak-banner {
+  background: rgba(230, 126, 34, 0.15);
+  border: 1px solid var(--status-warning);
+  color: var(--status-warning);
+}
+
+/* ==========================================================================
+   BOTTLE REVEAL — suspenso al desbloquear botella (GSAP)
+   ========================================================================== */
+.bottle-reveal-stage {
+  position: relative;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.bottle-reveal-mystery {
+  position: absolute;
+  font-size: 4.5rem;
+  filter: drop-shadow(0 0 12px rgba(184, 134, 11, 0.5));
+}
+
+.bottle-reveal-card {
+  width: 100%;
+}
+
+.bottle-reveal-surprise-tag {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent-gold-light);
+  background: rgba(184, 134, 11, 0.15);
+  border: 1px solid var(--color-dorado);
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  width: fit-content;
+}
+
+.bottle-reveal-caption {
+  text-align: center;
+  font-weight: 700;
+  color: var(--color-crema);
+  margin-bottom: 16px;
+}
+
+.bottle-reveal-close-btn {
+  width: 100%;
+  min-height: 50px;
+}
+
+/* ==========================================================================
+   CERTIFICADO DESCARGABLE
+   ========================================================================== */
+.ce-cert-panel {
+  text-align: center;
+  border-top: 1px solid var(--glass-border);
+  padding-top: 18px;
+  margin-bottom: 16px;
+}
+
+.ce-cert-headline {
+  font-family: var(--font-title);
+  font-weight: 700;
+  color: var(--accent-gold);
+  margin-bottom: 12px;
+}
+
+.ce-cert-preview-wrap {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-dorado);
+  margin-bottom: 14px;
+}
+
+.ce-cert-preview {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ==========================================================================
+   COURSE ENGINE — extras Fase 2 (prompt 3): pista del skin_enologo y
+   badge persistente del Vinotipo en el resumen de sesión
+   ========================================================================== */
+.ce-hint-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--status-info);
+  background: rgba(41, 128, 185, 0.15);
+  border: 1px solid var(--status-info);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  width: fit-content;
+  margin-bottom: 14px;
+}
+
+.ce-vinotipo-badge {
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--accent-gold-light);
+  background: rgba(184, 134, 11, 0.12);
+  border: 1px solid var(--glass-border);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  margin-bottom: 14px;
+}
+
+/* ==========================================================================
+   VINOTIPO REVEAL — puente hacia "Dime tu Carácter" (Fase 2, prompt 3)
+   ========================================================================== */
+.vinotipo-reveal-stage {
+  position: relative;
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.vinotipo-reveal-mystery {
+  position: absolute;
+  font-size: 4.5rem;
+  filter: drop-shadow(0 0 12px rgba(184, 134, 11, 0.5));
+}
+
+.vinotipo-reveal-card {
+  width: 100%;
+  text-align: center;
+  padding: 20px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--color-dorado);
+}
+
+.vinotipo-reveal-eyebrow {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.vinotipo-reveal-emoji {
+  display: block;
+  font-size: 3.4rem;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.vinotipo-reveal-name {
+  font-family: var(--font-title);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  margin-bottom: 4px;
+}
+
+.vinotipo-reveal-tagline {
+  font-weight: 700;
+  color: var(--color-crema);
+  font-size: 0.92rem;
+  margin-bottom: 12px;
+}
+
+.vinotipo-reveal-desc {
+  color: var(--text-main);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.vinotipo-reveal-book {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--accent-gold-light);
+  background: rgba(184, 134, 11, 0.12);
+  border: 1px solid rgba(184, 134, 11, 0.4);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
+/* ==========================================================================
+   SHOP MODAL — Tienda de Corchito (Fase 2, prompt 3)
+   ========================================================================== */
+.shop-cta-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  border-radius: var(--radius-md);
+  border-color: var(--color-dorado);
+  background: rgba(184, 134, 11, 0.1);
+  color: var(--color-crema);
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-align: left;
+  min-height: 48px;
+}
+
+.shop-cta-banner span:first-child {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.cava-vinotipo-tag {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: var(--accent-gold-light);
+}
+
+/* Tienda de Corchito — filas "skin-card" (Sistema Visual v2) */
+.skin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skin-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--linea);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(245, 239, 224, 0.03);
+  transition: border-color var(--transition-fast);
+}
+
+.skin-card.owned {
+  border-color: rgba(127, 179, 127, 0.4);
+}
+
+.skin-ic {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: radial-gradient(circle, #2a1c10, #100a06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.skin-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.skin-name {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-crema);
+  line-height: 1.2;
+}
+
+.skin-desc {
+  font-size: 0.75rem;
+  color: var(--crema-dim);
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.skin-price,
+.skin-buy-btn,
+.skin-equip-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.skin-price {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.skin-price.owned-tag {
+  color: var(--exito);
+  font-weight: 700;
+}
+
+.skin-buy-btn {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--dorado-light);
+  background: rgba(184, 134, 11, 0.12);
+  border: 1px solid var(--linea);
+  border-radius: var(--radius-full);
+  padding: 8px 12px;
+  cursor: pointer;
+  min-height: 36px;
+}
+
+.skin-buy-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.skin-equip-btn {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-crema);
+  background: var(--color-borgona);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  padding: 8px 14px;
+  cursor: pointer;
+  min-height: 36px;
+}
+
+/* ==========================================================================
+   FOOTER — toggle de audio (Fase 2, prompt 3)
+   ========================================================================== */
+.footer-audio-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+  min-height: 32px;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.footer-audio-toggle:hover {
+  border-color: var(--color-dorado);
+  color: var(--color-crema);
+}
+
+.footer-audio-toggle-label {
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   RESPONSIVE — TABLET+ AJUSTES PARA COMPONENTES DE FASE 2 (prompt 2)
+   ========================================================================== */
+@media (min-width: 600px) {
+  .ce-option {
+    padding: 16px 18px;
+  }
+
+  .ce-summary-stats {
+    gap: 36px;
+  }
+
+  .streak-banner {
+    flex-wrap: nowrap;
+  }
+
+  .skin-card {
+    padding: 14px 18px;
+  }
+
+  .vinotipo-reveal-emoji {
+    font-size: 4rem;
+  }
+}
